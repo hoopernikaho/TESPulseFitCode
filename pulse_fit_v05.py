@@ -29,6 +29,8 @@ from multiprocessing import Pool, cpu_count
 import tqdm
 from mpl_toolkits.mplot3d import Axes3D
 
+global height_th=0.033909276033911986
+
 def one_pulse(x, x_offset=0, amplitude=1):
         """convert the sample single photon pulse into a function
         that can be used in a fit

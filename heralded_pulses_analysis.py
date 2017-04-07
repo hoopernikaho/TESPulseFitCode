@@ -6,6 +6,7 @@ import tqdm
 from scipy.signal import savgol_filter
 import scipy.sparse as sparse
 from scipy.sparse.linalg import spsolve
+from pulse_discrimination import discriminator
 
 def find_idx(time_v, t0):
 	return np.argmin(np.abs(time_v - t0))
@@ -59,7 +60,7 @@ def param_extr(filename, t_initial=None, t_final=None, h_th=0.0075, t0=.56e-6):
 	# area_abs = np.sum(np.abs(signal[signal>h_th]))
 	area_abs = np.sum(np.abs(signal))
 	heightattime=signal[find_idx(time,t0)]
-	timeofarrival=time[find_idx(signal,height_th)]
+	timeofarrival=time[find_idx(signal,h_th)]
 
 	return np.array((area_win, area_abs, height, heightattime, bg),
 		dtype=[('area_win','float64'),
@@ -126,6 +127,37 @@ def baseline_correction(y, lam=10**8, p=.001, niter=10):
 	y = y - find_bg(y) 
 	return y
 
+def pplot(filelist,density=10,plot_every=5):
+	"""generates a lightweight plot of some sample traces
+	WARNING: does not automatically remove trace dc offset
+	:params density: plot every 'density' number of traces
+	"""
+	plt.figure()
+	for f in filelist[::density]:
+		trc = lecroy.LecroyBinaryWaveform(f)
+		time = trc.mat[:,0]
+		signal = trc.mat[:,1]
+		# plot_every = int(len(time)/100)
+		plt.plot(time[::plot_every]*1e6,signal[::plot_every],alpha=0.2)
+		plt.xlabel('time(us)')
+
+def save_sample_traces(filelist,sample_trace_directory_name=None):
+	for f in tqdm.tqdm(filelist):
+		trc = lecroy.LecroyBinaryWaveform(f)
+		time = trc.mat[:,0]
+		signal = trc.mat[:,1]
+		fname = f.strip('.trc').split('/')[-1]
+		np.savetxt(sample_trace_directory_name+fname+'.txt', np.array(zip(time,signal)))
+
+def load_sample_traces(sample_trace_directory_name):
+	sample_traces = []
+	for f in glob.glob(sample_trace_directory_name+'*.txt'):
+		trc = np.loadtxt(f)
+		time = trc[:,0]
+		signal = trc[:,1]
+		# print time,signal
+		sample_traces.append(np.array(zip(time,signal)))
+	return np.array(sample_traces)
 
 if __name__ == '__main__':
 	
@@ -169,35 +201,3 @@ if __name__ == '__main__':
 	Jianwei
 	"""
 	trc_double = np.array([trace_extr(f, t_initial, t_final) for f in filelist[mask_2ph]])
-
-	def pplot(filelist,density=10,plot_every=5):
-		"""generates a lightweight plot of some sample traces
-		WARNING: does not automatically remove trace dc offset
-		:params density: plot every 'density' number of traces
-		"""
-		plt.figure()
-		for f in filelist[::density]:
-			trc = lecroy.LecroyBinaryWaveform(f)
-			time = trc.mat[:,0]
-			signal = trc.mat[:,1]
-			# plot_every = int(len(time)/100)
-			plt.plot(time[::plot_every]*1e6,signal[::plot_every],alpha=0.2)
-			plt.xlabel('time(us)')
-
-	def save_sample_traces(filelist,sample_trace_directory_name=None):
-		for f in tqdm.tqdm(filelist):
-			trc = lecroy.LecroyBinaryWaveform(f)
-			time = trc.mat[:,0]
-			signal = trc.mat[:,1]
-			fname = f.strip('.trc').split('/')[-1]
-			np.savetxt(sample_trace_directory_name+fname+'.txt', np.array(zip(time,signal)))
-
-	def load_sample_traces(sample_trace_directory_name):
-		sample_traces = []
-		for f in glob.glob(sample_trace_directory_name+'*.txt'):
-			trc = np.loadtxt(f)
-			time = trc[:,0]
-			signal = trc[:,1]
-			# print time,signal
-			sample_traces.append(np.array(zip(time,signal)))
-		return np.array(sample_traces)
