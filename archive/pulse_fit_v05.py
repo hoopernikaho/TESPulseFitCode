@@ -29,7 +29,7 @@ from multiprocessing import Pool, cpu_count
 import tqdm
 from mpl_toolkits.mplot3d import Axes3D
 
-height_th = 0.0075
+global height_th=0.033909276033911986
 
 def one_pulse(x, x_offset=0, amplitude=1):
         """convert the sample single photon pulse into a function
@@ -314,12 +314,12 @@ def valid_result(time,signal,result,tolerance=.8):
     else: 
         return False
 
-# mask_valid = []
-# for f,r in zip(filelist[mask_2ph],results):
-#     t,s = hps.trace_extr(f, t_initial, t_final)
-#     mask_valid.append(
-#         valid_result(t,s,r,.5)
-#             )
+mask_valid = []
+for f,r in zip(filelist[mask_2ph],results):
+    t,s = hps.trace_extr(f, t_initial, t_final)
+    mask_valid.append(
+        valid_result(t,s,r,.5)
+            )
 
 
 """VISUALISATION FOR DIAGNOSISING FITS"""
@@ -427,114 +427,114 @@ def hist(data,bins=400,lims=None, label='', Plot=True, alpha=.5):
 """
 CHISQ vs TAU
 """
-# def plot_chqsqr_tau(tau=tau,chisqs=chisqs):
-#     plt.figure();plt.scatter(tau*1e9,chisqs)
-#     plt.figure();plt.scatter(tau*1e9,redchis);plt.ylim([np.min(redchis),np.max(redchis)])
+def plot_chqsqr_tau(tau=tau,chisqs=chisqs):
+    plt.figure();plt.scatter(tau*1e9,chisqs)
+    plt.figure();plt.scatter(tau*1e9,redchis);plt.ylim([np.min(redchis),np.max(redchis)])
 
-#     amplitudes_min=np.min(one_amplitudes,two_amplitudes)
-#     plt.figure();plt.scatter(tau*1e9,amplitudes_min);plt.ylim([np.min(amplitudes_min),np.max(amplitudes_min)])
+    amplitudes_min=np.min(one_amplitudes,two_amplitudes)
+    plt.figure();plt.scatter(tau*1e9,amplitudes_min);plt.ylim([np.min(amplitudes_min),np.max(amplitudes_min)])
 
 """
 ARRIVAL TIMES HISTOGRAM
 """
-# def plot_offsets(one_x_offsets=one_x_offsets,two_x_offsets=one_x_offsets):
-#     fig_arr = plt.figure()
-#     ax = fig_arr.add_subplot(211)
-#     ax.hist(one_x_offsets*1e9,400,
-#         range=([t_initial*1e9,t_final*1e9]),
-#         alpha=.5,
-#         label='one_x_offset'); plt.legend()
+def plot_offsets(one_x_offsets=one_x_offsets,two_x_offsets=one_x_offsets):
+    fig_arr = plt.figure()
+    ax = fig_arr.add_subplot(211)
+    ax.hist(one_x_offsets*1e9,400,
+        range=([t_initial*1e9,t_final*1e9]),
+        alpha=.5,
+        label='one_x_offset'); plt.legend()
 
-#     ax1 = fig_arr.add_subplot(212)
-#     ax1.hist(two_x_offsets*1e9,400,
-#         range=([t_initial*1e9,t_final*1e9]),
-#         alpha=.5,
-#         label='two_x_offset'); plt.legend()
-#     plt.xlabel('time(ns)')
-#     plt.show()
+    ax1 = fig_arr.add_subplot(212)
+    ax1.hist(two_x_offsets*1e9,400,
+        range=([t_initial*1e9,t_final*1e9]),
+        alpha=.5,
+        label='two_x_offset'); plt.legend()
+    plt.xlabel('time(ns)')
+    plt.show()
 
 """
 TAU vs OFFSETS
 """
-# def plot_tau_vs_offsets(one_x_offsets=one_x_offsets,two_x_offsets=two_x_offsets,tau=tau):
-#     fig = plt.figure()
-#     ax = fig.add_subplot(111, projection='3d')
+def plot_tau_vs_offsets(one_x_offsets=one_x_offsets,two_x_offsets=two_x_offsets,tau=tau):
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
 
-#     ax.scatter(one_x_offsets[mask],
-#         two_x_offsets[mask],
-#         tau[mask]*1e6
-#         ,marker=".")
+    ax.scatter(one_x_offsets[mask],
+        two_x_offsets[mask],
+        tau[mask]*1e6
+        ,marker=".")
 
-#     ax.set_xlabel('one_offset');ax.set_ylabel('two_offset');ax.set_zlabel('tau(us)')
+    ax.set_xlabel('one_offset');ax.set_ylabel('two_offset');ax.set_zlabel('tau(us)')
 
-#     ax.set_xlim([np.min(one_x_offsets),np.max(one_x_offsets)])
-#     ax.set_xlim([np.min(two_x_offsets),np.max(two_x_offsets)])
-#     ax.set_zlim([0,0.7])
+    ax.set_xlim([np.min(one_x_offsets),np.max(one_x_offsets)])
+    ax.set_xlim([np.min(two_x_offsets),np.max(two_x_offsets)])
+    ax.set_zlim([0,0.7])
 
-# def misc():
-#     """
-#     ONE OFFSET vs TWO OFFSET 
-#     """
-#     plt.figure()
-#     plt.title('Arrival times')
-#     plt.scatter(one_x_offsets*1e9,two_x_offsets*1e9,
-#         marker=".")
-#     plt.xlabel('one_x_offset(ns)')
-#     plt.ylabel('two_x_offset(ns)')
+def misc():
+    """
+    ONE OFFSET vs TWO OFFSET 
+    """
+    plt.figure()
+    plt.title('Arrival times')
+    plt.scatter(one_x_offsets*1e9,two_x_offsets*1e9,
+        marker=".")
+    plt.xlabel('one_x_offset(ns)')
+    plt.ylabel('two_x_offset(ns)')
 
-#     """
-#     ONE AMPLITUDE TWO AMPLITUDE vs TAU
-#     """
-#     x = one_amplitudes
-#     y = two_amplitudes
-#     z = tau*1e9
+    """
+    ONE AMPLITUDE TWO AMPLITUDE vs TAU
+    """
+    x = one_amplitudes
+    y = two_amplitudes
+    z = tau*1e9
 
-#     x = one_amplitudes[mask]
-#     y = two_amplitudes[mask]
-#     z = tau[mask]*1e9
+    x = one_amplitudes[mask]
+    y = two_amplitudes[mask]
+    z = tau[mask]*1e9
 
-#     fig = plt.figure()
-#     ax = fig.add_subplot(111, projection='3d')
-#     ax.scatter(x,y,z,marker=".")
+    fig = plt.figure()
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(x,y,z,marker=".")
 
-#     ax.set_xlabel('one_ampl')
-#     ax.set_ylabel('two_ampl')
-#     ax.set_zlabel('tau(ns)')
+    ax.set_xlabel('one_ampl')
+    ax.set_ylabel('two_ampl')
+    ax.set_zlabel('tau(ns)')
 
-#     ax.set_xlim([0,3])
-#     ax.set_ylim([0,3])
-#     # ax.set_zlim([-8e3,8e3])
+    ax.set_xlim([0,3])
+    ax.set_ylim([0,3])
+    # ax.set_zlim([-8e3,8e3])
 
-    # """
-    # ONE AMPLITUDE TWO AMPLITUDE at TAU slice
-    # """
-    # mask = np.where((np.abs(tau)>0e-9)&(np.abs(tau)<1000e-9))
-    # plt.figure(); plt.scatter(one_amplitudes[mask], two_amplitudes[mask],marker=".")
+    """
+    ONE AMPLITUDE TWO AMPLITUDE at TAU slice
+    """
+    mask = np.where((np.abs(tau)>0e-9)&(np.abs(tau)<1000e-9))
+    plt.figure(); plt.scatter(one_amplitudes[mask], two_amplitudes[mask],marker=".")
 
-    # """Compute signal photon number for 2 photon traces"""
-    # arrival_times_flatten = np.append(one_x_offsets, two_x_offsets)
-    # arrival_times_hist = np.histogram(arrival_times_flatten,400,range=([t_initial,t_final]))
-    # # mask_signal = [((t1>0) & (t1<100e-9)) or ((t2>0) & (t2<100e-9)) for t1,t2 in arrival_times]
-    # mask_signal = [((t1>-1e-6) & (t1<1e-6)) or ((t2>-1e-6) & (t2<1e-6)) for t1,t2 in arrival_times]
-    # print np.sum(mask_signal)
+    """Compute signal photon number for 2 photon traces"""
+    arrival_times_flatten = np.append(one_x_offsets, two_x_offsets)
+    arrival_times_hist = np.histogram(arrival_times_flatten,400,range=([t_initial,t_final]))
+    # mask_signal = [((t1>0) & (t1<100e-9)) or ((t2>0) & (t2<100e-9)) for t1,t2 in arrival_times]
+    mask_signal = [((t1>-1e-6) & (t1<1e-6)) or ((t2>-1e-6) & (t2<1e-6)) for t1,t2 in arrival_times]
+    print np.sum(mask_signal)
 
-    # """AREA DISTRIBUTION OF INTERESTING TRACES"""
-    # # data_hopt = data_hopt=np.array([hps.param_extr(f,t_initial,t_final,h_th=0.008) for f in tqdm.tqdm(filelist[:15000])])
+    """AREA DISTRIBUTION OF INTERESTING TRACES"""
+    # data_hopt = data_hopt=np.array([hps.param_extr(f,t_initial,t_final,h_th=0.008) for f in tqdm.tqdm(filelist[:15000])])
 
 
-    # n2ph,a2ph = np.histogram(data_hopt[:,0][mask_2ph][mask],100,range=([0,14]))
-    # n2phm,a2phm = np.histogram(data_hopt[:,0][mask_2ph][mask2],100,range=([0,14]))
-    # ratio = np.array(n2phm)/np.array(n2ph) 
-    # plt.figure();plt.bar(a2phm[:-1],ratio,width=a2phm[1]-a2phm[0])
+    n2ph,a2ph = np.histogram(data_hopt[:,0][mask_2ph][mask],100,range=([0,14]))
+    n2phm,a2phm = np.histogram(data_hopt[:,0][mask_2ph][mask2],100,range=([0,14]))
+    ratio = np.array(n2phm)/np.array(n2ph) 
+    plt.figure();plt.bar(a2phm[:-1],ratio,width=a2phm[1]-a2phm[0])
 
-    # """
-    # FITTED vs INITIAL
-    # """
-    # fig = plt.figure()
-    # plt.scatter(one_x_offsets_init[mask]*1e9, one_x_offsets[mask]*1e9)
-    # plt.scatter(two_x_offsets_init[mask]*1e9, two_x_offsets[mask]*1e9)
-    # ax = fig.add_subplot(111, projection='3d')
-    # ax.scatter(two_x_offsets_init*1e9, two_x_offsets*1e9, np.array(chisqs)/1000)
+    """
+    FITTED vs INITIAL
+    """
+    fig = plt.figure()
+    plt.scatter(one_x_offsets_init[mask]*1e9, one_x_offsets[mask]*1e9)
+    plt.scatter(two_x_offsets_init[mask]*1e9, two_x_offsets[mask]*1e9)
+    ax = fig.add_subplot(111, projection='3d')
+    ax.scatter(two_x_offsets_init*1e9, two_x_offsets*1e9, np.array(chisqs)/1000)
 
 
 def time_diff(time, signal):
