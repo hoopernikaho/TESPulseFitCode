@@ -105,8 +105,13 @@ def fit_corrected_pulse(filelist, fit_model, t_initial=None, t_final=None):
     time = time[idx_0:idx_0 + v_len]
     a = [line[idx_0:idx_0 + v_len] for line in a]
     a_avg = np.nanmean(a, 0)
+    a_std = np.nanstd(a, 0)
+    # bg = np.median(a[a<0.5*np.max(a)])
+    # a_fs = savgol_filter(a_avg, 101, 5)
+    hist_fs = np.histogram(a_avg[a_avg<np.max(a_avg/2)], 500)
+    a_avg = a_avg - hist_fs[1][np.argmax(hist_fs[0])]
 
-    return time, a_avg-find_bg(a_avg)
+    return time, a_avg, a_std 
 
 if __name__ == '__main__':
 
