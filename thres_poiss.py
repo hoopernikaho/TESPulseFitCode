@@ -172,7 +172,6 @@ def gauss_fit_interp(pnr, min_peak_sep, threshold=None, weighted=False):
     # s_vec = centers.argsort()
     return result
 
-
 def thresholds(pnr, min_peak_sep, threshold=None, weighted=False):
     """
     halfway point between peaks
