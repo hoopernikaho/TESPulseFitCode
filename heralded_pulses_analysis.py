@@ -12,8 +12,10 @@ def find_idx(time_v, t0):
     return np.argmin(np.abs(time_v - t0))
 
 def find_bg(signal):
-    freq, ampl = np.histogram(signal, 50)
-    freq_f = savgol_filter(freq, 11, 3)
+    freq, ampl = np.histogram(signal, 500)
+    freq_f = savgol_filter(freq, 31, 1)
+    # print 'binsize = {}'.format(np.diff(ampl)[0])
+    # plt.plot(ampl[:-1],freq_f)
     return ampl[np.argmax(freq_f)]
 
 def param_extr(filename, t_initial=None, t_final=None, h_th=0.0075, t0=.56e-6):
@@ -36,11 +38,11 @@ def param_extr(filename, t_initial=None, t_final=None, h_th=0.0075, t0=.56e-6):
         idx_1 = find_idx(time, t_final)
     time = time[idx_0:idx_1]
     signal = signal[idx_0:idx_1]
-
     """
     Background Correction
     """
-    bg = np.median(signal[signal<h_th])
+    # bg = np.median(signal[signal<h_th])
+    bg = find_bg(signal)
     signal = signal - bg
  
     """
@@ -48,7 +50,7 @@ def param_extr(filename, t_initial=None, t_final=None, h_th=0.0075, t0=.56e-6):
     Clamp traces to reject half pulses at edges
     """
     [mask, clamp, edges, left_edges, right_edges] = discriminator(time, signal, 
-                                                                  dt_left=300e-9,dt_right=1400e-9, 
+                                                                  dt_left=0*300e-9,dt_right=1300e-9, 
                                                                   height_th=h_th, 
                                                                   Plot=False, 
                                                                   method=2)
@@ -58,10 +60,25 @@ def param_extr(filename, t_initial=None, t_final=None, h_th=0.0075, t0=.56e-6):
     Extract properties
     """
     height = np.max(signal)
-    try:
-        height_clamped = np.max(signal[mask&clamp]) # detect max height of trace excluding edges of trace
-    except:
-        height_clamped = np.max(signal)
+
+    # obtain height within region not containing fractional pulses
+    if (len(left_edges)>len(right_edges)):
+        height_clamped = np.max(signal[:left_edges[-1]])
+
+    if (len(left_edges)<len(right_edges)):
+        height_clamped = np.max(signal[right_edges[0]:])
+     # detect max height of trace excluding edges of trace
+    if (len(left_edges)==len(right_edges)):
+        if len(left_edges)==0:
+            height_clamped = np.max(signal)
+        else:
+            if left_edges[0]<right_edges[-1]:
+                height_clamped = np.max(signal[clamp])
+            else:
+                height_clamped = np.max(signal[right_edges[-1]:left_edges[0]])
+
+
+
     area_win = np.sum(np.abs(signal[mask&clamp]))
     # if np.sum(clamp) == 0:
     #     area_win = np.sum(np.abs(signal))
@@ -112,8 +129,8 @@ def trace_extr(filename, h_th, t_initial=None, t_final=None, zero=True):
     time = time[idx_0:idx_1]
     signal = signal[idx_0:idx_1]
 
-    # bg = find_bg(signal[signal<h_th])
-    bg = np.median(signal[signal<h_th])
+    bg = find_bg(signal)
+    # bg = np.median(signal[signal<h_th])
     signal = signal - bg
 
     if zero:
