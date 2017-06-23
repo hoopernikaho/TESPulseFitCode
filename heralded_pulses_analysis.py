@@ -94,7 +94,7 @@ def param_extr(filename, t_initial=None, t_final=None, h_th=0.0075, t0=.56e-6):
     Other parameters tried previously...
     """
     # area_abs = np.sum(np.abs(signal[signal>h_th]))
-    area_abs = np.sum(np.abs(signal))
+    area_abs = np.sum(np.abs(signal[signal>h_th]))
     heightattime=signal[find_idx(time,t0)]
     timeofarrival=time[find_idx(signal,h_th)]
 
