@@ -93,19 +93,21 @@ def param_extr(filename, t_initial=None, t_final=None, h_th=0.0075, t0=.56e-6):
     """
     Other parameters tried previously...
     """
-    # area_abs = np.sum(np.abs(signal[signal>h_th]))
+    area = np.sum(signal)
     area_abs = np.sum(np.abs(signal[signal>h_th]))
     heightattime=signal[find_idx(time,t0)]
     timeofarrival=time[find_idx(signal,h_th)]
 
     return np.array((area_win, 
                      area_abs, 
+                     area,
                      height, 
                      height_clamped, 
                      heightattime, 
                      bg),
         dtype=[('area_win','float64'),
         ('area_abs','float64'),
+        ('area','float64'),
         ('height','float64'),
         ('height_clamped','float64'),
         ('heightattime','float64'),
