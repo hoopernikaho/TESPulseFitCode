@@ -81,7 +81,7 @@ def peaks(pnr, min_peak_sep=1, threshold=None):
     return x_val[indexes], frequencies[indexes]
 
 
-def gauss_fit_interp(pnr, min_peak_sep, threshold=None, weighted=False):
+def gauss_fit_interp(pnr, min_peak_sep, threshold=None, weighted=False, plot=False):
     """
     improve the precision in the location of the peaks by fitting them
     using a sum of Gaussian distributions
@@ -170,8 +170,11 @@ def gauss_fit_interp(pnr, min_peak_sep, threshold=None, weighted=False):
     #                    for k, _
     #                    in enumerate(peaks_pos)])
     # s_vec = centers.argsort()
+    if plot:
+        plt.figure()
+        plt.plot(x_val,frequencies)
+        [plt.plot(x_val, result.eval_components(x=x_val)['g{}_'.format(k)]) for k,_ in enumerate(result.components)]
     return result
-
 
 def thresholds(pnr, min_peak_sep, threshold=None, weighted=False):
     """

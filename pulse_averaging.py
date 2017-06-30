@@ -53,8 +53,8 @@ def time_offset(time_v, trace):
     return shift(trace, - n_shift)
 
 
-def trace_ave(filelist, t_initial=None, t_final=None, smooth=201):
-    time, _ = hps.trace_extr(filelist[0], t_initial, t_final)
+def trace_ave(filelist, height_th, t_initial=None, t_final=None, smooth=201):
+    time, _ = hps.trace_extr(filelist[0], t_initial, t_final, h_th=height_th)
 
     a = [time_offset(*hps.trace_extr(file, t_initial, t_final))
          for file
@@ -94,8 +94,8 @@ def fit_shift(time_s, signal, fit_model):
     return shift(signal, -n_shift)
 
 
-def fit_corrected_pulse(filelist, fit_model, t_initial=None, t_final=None):
-    time, _ = hps.trace_extr(filelist[0], t_initial, t_final)
+def fit_corrected_pulse(filelist, height_th, fit_model, t_initial=None, t_final=None):
+    time, _ = hps.trace_extr(filelist[0], t_initial, t_final, h_th=height_th)
     a = [fit_shift(*hps.trace_extr(file, t_initial, t_final),
                    fit_model=fit_model)
          for file
