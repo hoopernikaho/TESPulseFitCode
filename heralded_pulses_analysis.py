@@ -8,6 +8,11 @@ import scipy.sparse as sparse
 from scipy.sparse.linalg import spsolve
 from pulse_discrimination import discriminator
 
+def append2file(filename,text):
+    with open(filename,"a+") as f:
+        f.write(text+'\n')
+        f.close()
+
 def find_idx(time_v, t0):
     return np.argmin(np.abs(time_v - t0))
 
@@ -64,9 +69,12 @@ def param_extr(filename, t_initial=None, t_final=None, h_th=0.0075, t0=.56e-6):
     # obtain height within region not containing fractional pulses
     if (len(left_edges)>len(right_edges)):
         height_clamped = np.max(signal[:left_edges[-1]])
+        # append2file('interesting_traces.dat', filename)
 
     if (len(left_edges)<len(right_edges)):
         height_clamped = np.max(signal[right_edges[0]:])
+        # append2file('interesting_traces.dat', filename)
+
      # detect max height of trace excluding edges of trace
     if (len(left_edges)==len(right_edges)):
         if len(left_edges)==0:
@@ -76,6 +84,7 @@ def param_extr(filename, t_initial=None, t_final=None, h_th=0.0075, t0=.56e-6):
                 height_clamped = np.max(signal[clamp])
             else:
                 height_clamped = np.max(signal[right_edges[-1]:left_edges[0]])
+                # append2file('interesting_traces.dat', filename)
 
 
 
