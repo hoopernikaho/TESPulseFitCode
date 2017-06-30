@@ -204,6 +204,7 @@ def min_overlap(x0, x1, sigma0, sigma1, samples=1000):
     noise[np.argmin(snr)]
     return x_vec[np.argmin(snr)]
 
+
 def thresholds_N(pnr, min_peak_sep, threshold=None, weighted=False):
     """
     thresholds between peaks assuming gaussian distributions
@@ -225,6 +226,7 @@ def thresholds_N(pnr, min_peak_sep, threshold=None, weighted=False):
             for j
             in range(N - 1)]
 
+
 if __name__ == '__main__':
 
     import matplotlib.pyplot as plt
@@ -241,18 +243,3 @@ if __name__ == '__main__':
     print(th)
     result.plot()
     plt.show()
-
-
-def min_overlap(x0, x1, sigma0, sigma1, samples=1000):
-    """
-    return threshold value that minimizes the overlap between the given
-    gaussian distributions
-    """
-    x_vec = np.linspace(x0, x1, samples)
-    noise = 1 - norm.cdf(x_vec, loc=x0, scale=sigma0)
-    sgn = norm.cdf(x_vec, loc=x1, scale=sigma1)
-    snr = sgn + noise
-    return x_vec[np.argmin(snr)], sgn[np.argmin(snr)], noise[np.argmin(snr)]
-
-# min_overlaps=[min_overlap(aresult.values['g{}_center'.format(k)],aresult.values['g{}_center'.format(k+1)],aresult.values['g{}_sigma'.format(k)],aresult.values['g{}_sigma'.format(k+1)])
-# for k in np.arange(7)]

@@ -2,15 +2,17 @@ import heralded_pulses_analysis as hps
 import numpy as np
 import peakutils
 
-from lmfit import Model
+# from lmfit import Model
 from lmfit import Parameters
 
 from scipy.signal import savgol_filter
+
 
 def find_bg(signal):
     freq, ampl = np.histogram(signal, 50)
     freq_f = savgol_filter(freq, 11, 3)
     return ampl[np.argmax(freq_f)]
+
 
 def shift(xs, n):
     """ shifting array xs by n positions """
@@ -44,7 +46,7 @@ def time_offset(time_v, trace):
 
     try:
         time_p = peakutils.interpolate(time_v[:-1], d_signal, [idx_s])[0]
-    except (RuntimeError, ValueError) as e:
+    except (RuntimeError, ValueError):
         time_p = time_v[idx_s]
 
     n_shift = int(time_p / dt)
@@ -108,35 +110,35 @@ def fit_corrected_pulse(filelist, height_th, fit_model, t_initial=None, t_final=
     a_std = np.nanstd(a, 0)
     # bg = np.median(a[a<0.5*np.max(a)])
     # a_fs = savgol_filter(a_avg, 101, 5)
-    hist_fs = np.histogram(a_avg[a_avg<np.max(a_avg/2)], 500)
+    hist_fs = np.histogram(a_avg[a_avg < np.max(a_avg / 2)], 500)
     a_avg = a_avg - hist_fs[1][np.argmax(hist_fs[0])]
 
-    return time, a_avg, a_std 
+    return time, a_avg, a_std
+
 
 if __name__ == '__main__':
+    pass
+    # time_p, signal_p = trace_ave(filelist[mask_1ph], t_initial, t_final)
 
-    time_p, signal_p = trace_ave(filelist[mask_1ph], t_initial, t_final)
+    # def one_pulse(x, x_offset=0, amplitude=1):
+    #     """convert the sample single photon pulse into a function
+    #     that can be used in a fit
+    #     """
+    #     x = x - x_offset
+    #     return amplitude * np.interp(x, time_p, signal_p)
 
-    def one_pulse(x, x_offset=0, amplitude=1):
-        """convert the sample single photon pulse into a function
-        that can be used in a fit
-        """
-        x = x - x_offset
-        return amplitude * np.interp(x, time_p, signal_p)
+    # fit_model = Model(one_pulse)
 
-    fit_model = Model(one_pulse)
+    # time_f, signal_f = fit_corrected_pulse(filelist[mask_1ph], fit_model,
+    #                                        t_initial,
+    #                                        t_final)
 
-    
+    # signal_fs = savgol_filter(signal_f, 101, 5)
+    # hist_fs = np.histogram(signal_fs, 300)
+    # signal_fs = signal_fs - hist_fs[1][np.argmax(hist_fs[0])]
 
-    time_f, signal_f = fit_corrected_pulse(filelist[mask_1ph], fit_model,
-                                           t_initial,
-                                           t_final)
-
-    signal_fs = savgol_filter(signal_f, 101, 5)
-    hist_fs = np.histogram(signal_fs, 300)
-    signal_fs = signal_fs - hist_fs[1][np.argmax(hist_fs[0])]
-
-    # results_folder = ('/workspace/projects/TES/analysis/20161116_TES5_20MHz_bwl_diode_n012_height_optimised_results/')
-    # save average pulse
-    np.save(results_directory + 'ph1_model.npy',
-            np.array(zip(time_f, signal_fs)))
+    # # results_folder = ('/workspace/projects/TES/analysis/'
+    # '20161116_TES5_20MHz_bwl_diode_n012_height_optimised_results/')
+    # # save average pulse
+    # np.save(results_directory + 'ph1_model.npy',
+    #         np.array(zip(time_f, signal_fs)))
