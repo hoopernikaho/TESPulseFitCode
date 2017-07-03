@@ -45,12 +45,12 @@ def intervals(signal, high_th, low_th):
     while True:
         try:
             stop = next(x for x in low_cross if x > start)
-            stops.append(stop)
             start = next(x for x in hi_cross if x > stop)
+            stops.append(stop)
             starts.append(start)
         except StopIteration:
             break
-        # starts = starts[: len(stops)]
+        starts = starts[: len(stops)]
 
     return np.array(starts), np.array(stops)
 
