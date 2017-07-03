@@ -31,5 +31,7 @@ def create_mask_for_edges(length, start, stop):
 def disc_edges(signal, high_th, low_th):
     hi_cross = find_crossing(signal, high_th)
     low_cross = find_crossing(signal, low_th)
+    if not hi_cross:
+        return np.zeros(len(signal), dtype=bool)
     mask = create_mask_for_edges(len(signal), hi_cross[0], low_cross[0])
     return mask
