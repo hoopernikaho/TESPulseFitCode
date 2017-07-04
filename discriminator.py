@@ -51,8 +51,8 @@ def intervals(signal, high_th, low_th):
             stop = next(x for x in low_cross if x > start)
         except StopIteration:
             break
-            stops.append(stop)
-            starts.append(start)
+        stops.append(stop)
+        starts.append(start)
         starts = starts[: len(stops)]
 
     return np.array(starts), np.array(stops)
