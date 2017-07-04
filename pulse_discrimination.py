@@ -8,14 +8,10 @@ from scipy.signal import savgol_filter
 import matplotlib.pyplot as plt
 # import pulse_utils as pu
 
-<<<<<<< HEAD
 height_th = 0.0103
 
-
-def fill_between(initial, final):
-=======
 def fill_between(initial,final):
->>>>>>> 2a32507f24526850f2f413729b6adedbf5ac41fc
+
     """
     generates a list of numbers between initial and final.
     eg.
@@ -28,18 +24,8 @@ def fill_between(initial,final):
 def array_fill_between(_array, initial, final):
     return np.sort(np.unique(np.append(_array, fill_between(initial, final))))
 
-<<<<<<< HEAD
-
-def discriminator(time,
-                  signal,
-                  height_th=height_th,
-                  dt_left=200e-9,
-                  dt_right=1000e-9,
-                  Plot=False,
-                  method=0):
-=======
 def discriminator(time,signal,height_th,dt_left=300e-9,dt_right=1400e-9,Plot=False, method=0):
->>>>>>> 2a32507f24526850f2f413729b6adedbf5ac41fc
+
     """
     find area above threshold, including a dt_left duration of the siganl
     """
@@ -53,7 +39,7 @@ def discriminator(time,signal,height_th,dt_left=300e-9,dt_right=1400e-9,Plot=Fal
     mask = initial_window
     if len(mask) > 0:
         if method == 0:
-<<<<<<< HEAD
+
             # MASK METHOD 1: include regions left and right of signal above
             # threshold.
             for i in np.arange(len(initial_window)) - 1:
@@ -85,7 +71,7 @@ def discriminator(time,signal,height_th,dt_left=300e-9,dt_right=1400e-9,Plot=Fal
         if method == 1:
             # MASK METHOD 2: SR LATCH
             mask = srlatch_full(signal, 0, height_th)
-=======
+
             # MASK METHOD 1: include regions left and right of signal above threshold.
             for i in np.arange(len(initial_window))-1:
                     if (initial_window[i+1]-initial_window[i] < bins_right+bins_left):
@@ -105,19 +91,15 @@ def discriminator(time,signal,height_th,dt_left=300e-9,dt_right=1400e-9,Plot=Fal
                 #left most pulse exceeds left edge of trace
                 #0-1 term includes one more index '-1' since fill_between fills from 0
                 mask = array_fill_between(mask, 0-1, mask[0])
-        
-        if method == 1:
-            # MASK METHOD 2: SR LATCH FULL
-            mask = srlatch_full(signal, 0, height_th)
             
->>>>>>> 2a32507f24526850f2f413729b6adedbf5ac41fc
+
         if method == 2:
             # MASK METHOD 3: rev SR LATCH
             initial_window = np.where(srlatch_rev(signal, 0, height_th))[0]
             
             # MANUAL INCLUSION OF ADDITIONAL PULSE REGIONS, since srlatch_rev does not include the full pulse 
             mask = initial_window
-<<<<<<< HEAD
+
             for i in np.arange(len(initial_window)) - 1:
                 if (initial_window[i + 1] - initial_window[i] < bins_right + bins_left):
                     mask = array_fill_between(
@@ -145,7 +127,7 @@ def discriminator(time,signal,height_th,dt_left=300e-9,dt_right=1400e-9,Plot=Fal
                 mask = array_fill_between(mask, 0 - 1, mask[0])
 
     # transforms index mask into boolean mask
-=======
+
             for i in np.arange(len(initial_window))-1:
                     if (initial_window[i+1]-initial_window[i] < bins_right+bins_left):
                         mask = array_fill_between(mask, initial_window[i], initial_window[i+1])
@@ -171,7 +153,7 @@ def discriminator(time,signal,height_th,dt_left=300e-9,dt_right=1400e-9,Plot=Fal
             mask = srlatch(signal, 0, height_th)
 
     #transforms index mask into boolean mask
->>>>>>> 2a32507f24526850f2f413729b6adedbf5ac41fc
+
     mask_boolean = np.zeros(len(time), dtype=int)
     mask_boolean[mask] = 1
     mask = mask_boolean
@@ -187,7 +169,7 @@ def discriminator(time,signal,height_th,dt_left=300e-9,dt_right=1400e-9,Plot=Fal
         for i in np.arange(len(time)):
             if left_edges[0] <= i <= right_edges[-1]:
                 clamp[i] = 1
-<<<<<<< HEAD
+
     clamp = np.array(clamp, dtype='bool')
     mask = np.array(mask, dtype='bool')
     # print clamp,edges,left_edges,right_edges
@@ -201,7 +183,7 @@ def discriminator(time,signal,height_th,dt_left=300e-9,dt_right=1400e-9,Plot=Fal
         plt.plot(time, (clamp & mask) * np.max(signal), label='clamp&mask')
         plt.scatter(time[(clamp & mask)], signal[
                     (clamp & mask)], label='', color='red', marker='o')
-=======
+
             # else:
                 # clamp = np.ones(len(time))     
                 # print 'error: no index between first left and last right \n{}'.format([left_edges, right_edges])
@@ -221,12 +203,10 @@ def discriminator(time,signal,height_th,dt_left=300e-9,dt_right=1400e-9,Plot=Fal
         plt.plot(time[1:],edges*np.max(signal),label='edges')
         plt.plot(time,(clamp&mask)*np.max(signal),label='clamp&mask')
         plt.scatter(time[(clamp&mask)],signal[(clamp&mask)],label='',color='red',marker='o')
->>>>>>> 2a32507f24526850f2f413729b6adedbf5ac41fc
         plt.legend()
 
     return np.array([mask, clamp, edges, left_edges, right_edges])
 
-<<<<<<< HEAD
 
 def area_windowed(time,
                   signal,
@@ -258,14 +238,14 @@ def area_breakdown(time,
         dt_left=dt_left,
         dt_right=dt_right,
         Plot=Plot)
-=======
+
 def area_windowed(time,signal,height_th,dt_left=200e-9,dt_right=1000e-9,Plot=False,method=0):
     [mask, clamp, edges, left_edges, right_edges] = discriminator(time, signal, height_th=height_th,dt_left=dt_left,dt_right=dt_right,Plot=Plot, method=method)
     return np.sum(np.abs(signal[clamp&mask]))
 
 def area_breakdown(time,signal,height_th,dt_left=200e-9,dt_right=1000e-9,Plot=False):
     [mask, clamp, edges, left_edges, right_edges] = discriminator(time, signal, height_th=height_th,dt_left=dt_left,dt_right=dt_right,Plot=Plot)
->>>>>>> 2a32507f24526850f2f413729b6adedbf5ac41fc
+
     parity = np.sum(edges)
 
     if len(left_edges) and len(right_edges):  # at least 1 full pulse
@@ -283,15 +263,8 @@ def area_breakdown(time,signal,height_th,dt_left=200e-9,dt_right=1000e-9,Plot=Fa
 
     return np.array(areas), mask, clamp, edges, left_edges, right_edges
 
-
-<<<<<<< HEAD
-def srlatch(_signal, reset_th, set_th=height_th):
-=======
-# def matched_filter(_signal,signal_fs=signal_fs_pad):
-#     return np.convolve(_signal,np.conjugate(signal_fs),mode='valid')/np.sum(signal_fs)
-
 def srlatch(_signal,reset_th, set_th):
->>>>>>> 2a32507f24526850f2f413729b6adedbf5ac41fc
+
     """
     Implements a two level discriminator, returning a mask
     """
@@ -311,8 +284,7 @@ def srlatch(_signal,reset_th, set_th):
             q[i] == -1  # error
     return np.array(q)
 
-<<<<<<< HEAD
-=======
+
 def srlatch_full(_signal,reset_th, set_th):
     q=srlatch(_signal, reset_th, set_th)
     qrev=np.flipud(srlatch(np.flipud(_signal), reset_th, set_th))
@@ -539,7 +511,7 @@ def savdiscopp(time,signal,numpts):
 
 
 
->>>>>>> 2a32507f24526850f2f413729b6adedbf5ac41fc
+
 
 def srlatch_full(_signal, reset_th, set_th=height_th):
     q = srlatch(_signal, reset_th, set_th)

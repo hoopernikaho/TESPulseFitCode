@@ -481,3 +481,39 @@ def gauss_fit_results(pnr, min_peak_sep, threshold=None, weighted=False, plot=Fa
 #     return [tp.min_overlap(xs[j], xs[j + 1], ss[j], ss[j + 1])
 #             for j
 #             in range(N - 1)]
+
+def min_overlap(x0, x1, sigma0, sigma1, samples=1000):
+    """
+    return threshold value that minimizes the overlap between the given
+    gaussian distributions
+    """
+    x_vec = np.linspace(x0, x1, samples)
+    noise = 1 - norm.cdf(x_vec, loc=x0, scale=sigma0)
+    sgn = norm.cdf(x_vec, loc=x1, scale=sigma1)
+    snr = sgn + noise
+    print 'at threshold {}:'.format(x_vec[np.argmin(snr)])
+    print 'prob signal lost = {}'.format(sgn[np.argmin(snr)])
+    print 'prob noise enters = {}'.format(noise[np.argmin(snr)])
+
+    return x_vec[np.argmin(snr)]
+
+def thresholds_N(pnr, min_peak_sep, threshold=None, weighted=False):
+    """
+    thresholds between peaks assuming gaussian distributions
+    """
+    result = gauss_fit_poiss_ph_region(pnr, min_peak_sep, threshold, weighted)
+
+    centers = np.array([result.best_values['g{}_center'.format(k+1)]
+                        for k, _
+                        in enumerate(result.components)])
+    sigmas = np.array([result.best_values['g{}_sigma'.format(k+1)]
+                       for k, _
+                       in enumerate(result.components)])
+    s_vec = centers.argsort()
+
+    xs = centers[s_vec]
+    ss = sigmas[s_vec]
+    N = len(xs)
+    return [min_overlap(xs[j], xs[j + 1], ss[j], ss[j + 1])
+            for j
+            in range(N - 1)]

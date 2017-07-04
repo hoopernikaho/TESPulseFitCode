@@ -11,15 +11,13 @@ from discriminator import *
 from discriminator_edges import *
 from trace_param import *
 
-
-data_dir = 'interesting_traces/'
+data_dir = '/mnt/disk1/analysis/20170523_TES5_75mK_95uA_trise_115ns_results/peak_disc_challenging_traces/'
 filelist = glob.glob(data_dir + '*.trc')
 high_th = 0.00773176320829
 low_th = 0.00183298303024
 
-
-filename = random.choice(filelist)
-filename = 'interesting_traces/C2doubles02442.trc'
+filename = filelist[7]
+# filename = 'interesting_traces/C2doubles02442.trc'
 print(filename)
 
 signal = trace_extr(filename)
@@ -40,7 +38,7 @@ area = np.sum(np.abs(signal[mask]))
 print('area: {}'.format(area))
 print('max height outside of peaks: {}'.format(np.max(signal[~mask])))
 
-plt.figure(filename)
+plt.figure()
 # plt.clf()
 plt.plot(signal / np.max(signal))
 plt.plot([0, 5000], [high_th / np.max(signal), high_th / np.max(signal)], '--')
