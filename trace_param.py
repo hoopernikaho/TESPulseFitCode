@@ -6,6 +6,11 @@ based on
 https://github.com/yetifrisstlama/readTrc
 """
 import numpy as np
+try:
+    import htest
+    cyt = True
+except ImportError:
+    cyt = False
 
 from readTrc import *
 
@@ -23,8 +28,9 @@ def trace_extr(filename, bg_correction=True):
 
     _, signal, _ = readTrc(filename)
     if bg_correction:
-        signal = signal - find_bg(signal)
-
+        if cyt:
+            return signal - find_bg_c(signal)
+        return signal - find_bg(signal)
     return signal
 
 
@@ -32,12 +38,6 @@ def full_extr(filename):
 
     time, signal, d = readTrc(filename)
     return time, signal, d
-
-
-def find_bg_sav(signal, bins=500):
-    freq, ampl = np.histogram(signal, bins)
-    freq_f = savgol_filter(freq, int(bins / 10), 1)
-    return ampl[np.argmax(freq_f)]
 
 
 def find_bg(signal, bins=501):
@@ -52,6 +52,22 @@ def find_bg(signal, bins=501):
     """
     freq, ampl = np.histogram(signal, bins)
     return ampl[np.argmax(freq)]
+
+
+def find_bg_c(signal, bins=501):
+    """find vertical offsets
+
+    :param signal: trace
+    :type signal: array of float
+    :param bins: number of bins, defaults to 501
+    :type bins: int, optional
+    :returns: peak of the histogram
+    :rtype: float
+    """
+    h = htest.hist1d(bins, np.min(signal), np.max(signal))
+    h.fillcy(signal, np.ones(len(signal)))
+    # h.fillcywithcall(signal, np.ones(bins))
+    return h.xaxis.values()[np.argmax(h.data)]
 
 
 if __name__ == '__main__':
