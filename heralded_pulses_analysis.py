@@ -19,37 +19,32 @@ def append2file(filename,text):
 def find_idx(time_v, t0):
     return np.argmin(np.abs(time_v - t0))
 
-def find_bg(signal):
-    freq, ampl = np.histogram(signal, 50)
-    freq_f = savgol_filter(freq, 11, 3)
-    return ampl[np.argmax(freq_f)]
+def max_height(filename):
+    signal = tp.trace_extr(filename)
+    return np.max(signal)
 
-def find_bg(signal):
-    freq, ampl = np.histogram(signal, 500)
-    freq_f = savgol_filter(freq, 31, 1)
-    # print 'binsize = {}'.format(np.diff(ampl)[0])
-    # plt.plot(ampl[:-1],freq_f)
-    return ampl[np.argmax(freq_f)]
-
-def param_extr(filename, h_th, noise_th):
+def param_extr(filename, high_th, low_th, offset):
 
     signal = tp.trace_extr(filename)
 
     """
     Max Height
     """
-    mask_height = ~pu.disc_edges_full(signal,h_th,noise_th)+pu.disc_peak_full(signal,h_th,noise_th)
+    mask_height = ~pu.disc_edges_full(signal,high_th,low_th)+pu.disc_peak_full(signal,high_th,low_th,offset)
     if np.sum(mask_height) == 0:
         mask_height = np.ones(len(signal)).astype('bool')
     height = np.max(signal[mask_height])
 
+    """
+    RMS
+    """
     rms = np.sqrt(np.mean(np.square(signal[mask_height])))
 
     # height = np.max(signal)
     """
     Area within discriminator
     """
-    area_win = np.sum(signal[pu.disc_peak_full(signal,h_th,noise_th)])
+    area_win = np.sum(np.abs(signal[pu.disc_peak_full(signal,high_th,low_th,offset)]))
 
     return np.array((area_win, height, rms),
                 dtype=[('area_win', 'float64'),
@@ -57,145 +52,6 @@ def param_extr(filename, h_th, noise_th):
                        ('rms', 'float64')
                        ]
                 )
-
-# def param_extr_pd(filename, t_initial=None, t_final=None, h_th=0.0075, t0=.56e-6):
-#     """
-#     older version, using older version of discrminator
-#     extract relevant parameters from a trace stored in a file
-#     """
-#     trc = lecroy.LecroyBinaryWaveform(filename)
-#     time = trc.mat[:, 0][::10]
-#     signal = trc.mat[:, 1][::10]
-#     # time = trc.mat[:, 0][::10]
-#     # signal = trc.mat[:, 1][::10]
-#     time = trc.mat[:, 0][::1]
-#     signal = trc.mat[:, 1][::1]
-#     """
-#     Consider only signal between t_initial and t_final
-#     """
-#     idx_0 = 0
-#     idx_1 = -1
-#     if t_initial is not None:
-#         idx_0 = find_idx(time, t_initial)
-#     if t_final is not None:
-#         idx_1 = find_idx(time, t_final)
-#     time = time[idx_0:idx_1]
-#     signal = signal[idx_0:idx_1]
-
-#     """
-#     Background Correction
-#     """
-#     bg = np.median(signal[signal < h_th])
-#     signal = signal - bg
-
-#     """
-#     Background Correction
-#     """
-#     # bg = np.median(signal[signal<h_th])
-#     bg = find_bg(signal)
-#     signal = signal - bg
- 
-#     """
-#     Mask traces to reject noise
-#     Clamp traces to reject half pulses at edges
-#     """
-#     [mask, clamp, edges, left_edges, right_edges] = discriminator(
-#         time,
-#         signal,
-#         dt_left=200e-9,
-#         dt_right=700e-9,
-#         height_th=h_th,
-#         Plot=False,
-#         method=2)
-#     window = mask & clamp
-#     [mask, clamp, edges, left_edges, right_edges] = discriminator(time, signal, 
-#                                                                   dt_left=0*300e-9,dt_right=1300e-9, 
-#                                                                   height_th=h_th, 
-#                                                                   Plot=False, 
-#                                                                   method=2)
-#     window = mask&clamp
-
-#     """
-#     Extract properties
-#     """
-#     height = np.max(signal)
-#     area_win = np.sum(np.abs(signal[window]))
-
-#     """
-#     Other parameters tried previously...
-#     """
-#     # area_abs = np.sum(np.abs(signal[signal>h_th]))
-#     area_abs = np.sum(np.abs(signal))
-#     heightattime = signal[find_idx(time, t0)]
-#     # timeofarrival = time[find_idx(signal, h_th)]
-
-#     return np.array((area_win, area_abs, height, heightattime, bg),
-#                     dtype=[('area_win', 'float64'),
-#                            ('area_abs', 'float64'),
-#                            ('height', 'float64'),
-#                            ('heightattime', 'float64'),
-#                            ('bg', 'float64')]
-#                     )
-
-
-# def trace_extr(filename, t_initial=None, t_final=None, h_th=0.0103):
-
-#     # obtain height within region not containing fractional pulses
-#     if (len(left_edges)>len(right_edges)):
-#         height_clamped = np.max(signal[:left_edges[-1]])
-#         # append2file('interesting_traces.dat', filename)
-
-#     if (len(left_edges)<len(right_edges)):
-#         height_clamped = np.max(signal[right_edges[0]:])
-#         # append2file('interesting_traces.dat', filename)
-
-#      # detect max height of trace excluding edges of trace
-#     if (len(left_edges)==len(right_edges)):
-#         if len(left_edges)==0:
-#             height_clamped = np.max(signal)
-#         else:
-#             if left_edges[0]<right_edges[-1]:
-#                 height_clamped = np.max(signal[clamp])
-#             else:
-#                 height_clamped = np.max(signal[right_edges[-1]:left_edges[0]])
-#                 # append2file('interesting_traces.dat', filename)
-
-
-
-#     area_win = np.sum(np.abs(signal[mask&clamp]))
-#     # if np.sum(clamp) == 0:
-#     #     area_win = np.sum(np.abs(signal))
-#     # else:
-#     #     area_win = np.sum(np.abs(signal[clamp]))
-#     # try:
-#     #     t_left = time[left_edges[0]]
-#     #     t_right = time[right_edges[-1]]
-#     #     area_win = np.sum(np.abs(signal[(window)&(t_left<time)&(time<t_right)]))
-#     # except:
-#     #     area_win = 0
-#     """
-#     Other parameters tried previously...
-#     """
-#     area = np.sum(signal)
-#     area_abs = np.sum(np.abs(signal[signal>h_th]))
-#     heightattime=signal[find_idx(time,t0)]
-#     timeofarrival=time[find_idx(signal,h_th)]
-
-#     return np.array((area_win, 
-#                      area_abs, 
-#                      area,
-#                      height, 
-#                      height_clamped, 
-#                      heightattime, 
-#                      bg),
-#         dtype=[('area_win','float64'),
-#         ('area_abs','float64'),
-#         ('area','float64'),
-#         ('height','float64'),
-#         ('height_clamped','float64'),
-#         ('heightattime','float64'),
-#         ('bg','float64')]
-#         )
 
 def trace_extr(filename, h_th, t_initial=None, t_final=None, zero=True):
     """extract relevant parameters from a trace stored in a file

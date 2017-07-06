@@ -48,11 +48,11 @@ def gauss_fit_poiss_ph_region(pnr, min_peak_sep, threshold=None, weighted=False,
 
     # find a first approximation of the peak location using local differences
     peaks_pos, peak_height = tp.peaks([frequencies,x_val], min_peak_sep, threshold)
-    print 'est peak pos = {}\n est peak hts = {}'.format(peaks_pos, peak_height)
+    print 'est peak pos = {}\nest peak hts = {}'.format(peaks_pos, peak_height)
 
     # detect min between n=0 and n=1
     th01 = x_val[find_idx(x_val,peaks_pos[0]) + np.argmin(frequencies[(x_val>peaks_pos[0])&(x_val<peaks_pos[1])])]
-    
+    print 'th01 = {}'.format(th01)
 
     # constrain fitting region:
     x_val_ = x_val
@@ -83,7 +83,7 @@ def gauss_fit_poiss_ph_region(pnr, min_peak_sep, threshold=None, weighted=False,
     p.add('g2_center', peaks_pos[1], min=0)
     [p.add('g{}_center'.format(k+3),
            j,
-           expr='g{}_center + Delta_E'.format(k + 1)
+           # expr='g{}_center + Delta_E'.format(k + 1)
            )
      for k, j
      in enumerate(peaks_pos[2:])]
@@ -124,7 +124,8 @@ def gauss_fit_poiss_ph_region(pnr, min_peak_sep, threshold=None, weighted=False,
         plt.figure(figsize=(10,5))
         plt.errorbar(pnr[1][:-1]+step/2,pnr[0],yerr=np.sqrt(pnr[0]),linestyle='',ecolor='black',color='black')
         [plt.plot(x_val, result.eval_components(x=x_val)['g{}_'.format(k+1)]) for k,_ in enumerate(result.components)]
-        plt.axvline(th01,color='black')
+        plt.axvline(th01,color='black', label='th01')
+        plt.legend()
         print result.fit_report()
     return result
 
@@ -491,7 +492,7 @@ def min_overlap(x0, x1, sigma0, sigma1, samples=1000):
     noise = 1 - norm.cdf(x_vec, loc=x0, scale=sigma0)
     sgn = norm.cdf(x_vec, loc=x1, scale=sigma1)
     snr = sgn + noise
-    print 'at threshold {}:'.format(x_vec[np.argmin(snr)])
+    print 'at threshold {} between {} and {}:'.format(x_vec[np.argmin(snr)], x0, x1)
     print 'prob signal lost = {}'.format(sgn[np.argmin(snr)])
     print 'prob noise enters = {}'.format(noise[np.argmin(snr)])
 
