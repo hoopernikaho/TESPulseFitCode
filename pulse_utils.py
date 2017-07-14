@@ -33,9 +33,20 @@ def disc_peak_full(signal, high_th, low_th, offset):
     # [plt.axvline(s) for s in stops]
 
     stops = stops + offset
-    stops = stops[stops <= l_signal]
-    starts = starts[:len(stops)]
+    stops = stops[(stops <= l_signal)]
+    try:
+        """
+        checks if the extension of the last pulse overlaps an omitted partial pulse
+        if true, omit both pulses
+        """
+        last_stop = stops[-1]
+        hi_cross = disc.find_crossing(signal[last_stop-offset:last_stop], high_th)
+        if len(hi_cross)>0:
+            stops = np.delete(stops,0)
+    except:
+        pass #no last stop exists
 
+    starts = starts[:len(stops)]
     mask = disc.create_mask_for_peak(len(signal), starts, stops)
     
     return np.array(mask)

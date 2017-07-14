@@ -69,7 +69,7 @@ def trace_extr(filename, h_th, t_initial=None, t_final=None, zero=True):
     time = time[idx_0:idx_1]
     signal = signal[idx_0:idx_1]
 
-    bg = find_bg(signal)
+    bg = tp.find_bg(signal)
     # bg = np.median(signal[signal<h_th])
     signal = signal - bg
 
