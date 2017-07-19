@@ -10,8 +10,7 @@ def time_vector(filename):
     return time
 
 def disc_peak_full(signal, high_th, low_th, offset):
-    """from trace to mask
-
+    """
     high level function: from the trace and the SET-RESET threshold,
         generates a mask singling out the peaks
     :param signal: trace
@@ -24,7 +23,8 @@ def disc_peak_full(signal, high_th, low_th, offset):
     :rtype: numpy array of bool
     """
     l_signal = len(signal)
-    starts_, stops_ = disc.intervals_no_edges(np.flipud(signal), high_th, low_th)
+    # creates mask beginning from low crossing at leading edge to high crossing as the pulse decays
+    starts_, stops_ = disc.intervals_no_edges(np.flipud(signal), high_th, low_th) 
 
     stops = l_signal-starts_
     starts = l_signal-stops_
@@ -34,10 +34,13 @@ def disc_peak_full(signal, high_th, low_th, offset):
 
     stops = stops + offset
     stops = stops[(stops <= l_signal)]
+    
     try:
         """
-        checks if the extension of the last pulse overlaps an omitted partial pulse
-        if true, omit both pulses
+        checks if the extension of discriminator window of the last pulse overlaps 
+        an omitted partial pulse on the right edge of the trace.
+        if true, omit both pulses.
+        this avoids capturing a region containing 1.5 pulses.
         """
         last_stop = stops[-1]
         hi_cross = disc.find_crossing(signal[last_stop-offset:last_stop], high_th)
