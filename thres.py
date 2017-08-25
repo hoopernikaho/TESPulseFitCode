@@ -11,6 +11,7 @@ import peakutils
 import matplotlib.pyplot as plt
 import thres_poiss as tp
 from scipy.stats import norm
+import math
 
 from lmfit import Parameters
 from lmfit.models import GaussianModel, RectangleModel
@@ -23,7 +24,7 @@ Lower height thresholds result in accidentals, hence the trailing n=0 tail.
 def find_idx(array, value):
     return np.argmin(np.abs(array-value))
 
-def gauss_fit_poiss_ph_region(pnr, min_peak_sep, threshold=None, weighted=False, plot=False):
+def gauss_fit_poiss_ph_region(pnr, min_peak_sep, th01=None, threshold=None, weighted=False, plot=False):
     """
     improve the precision in the location of the peaks by fitting them
     using a sum of Gaussian distributions
@@ -51,7 +52,9 @@ def gauss_fit_poiss_ph_region(pnr, min_peak_sep, threshold=None, weighted=False,
     print 'est peak pos = {}\nest peak hts = {}'.format(peaks_pos, peak_height)
 
     # detect min between n=0 and n=1
-    th01 = x_val[find_idx(x_val,peaks_pos[0]) + np.argmin(frequencies[(x_val>peaks_pos[0])&(x_val<peaks_pos[1])])]
+    if th01==None:
+        th01 = x_val[find_idx(x_val,peaks_pos[0]) + np.argmin(frequencies[(x_val>peaks_pos[0])&(x_val<peaks_pos[1])])]
+
     print 'th01 = {}'.format(th01)
 
     # constrain fitting region:
@@ -72,14 +75,14 @@ def gauss_fit_poiss_ph_region(pnr, min_peak_sep, threshold=None, weighted=False,
 
     # Generate the initial conditions for the fit
     p = Parameters()
-    p.add('n_bar', 0.2)
+    p.add('n_bar', 0.2, min=0)
 
     p.add('A', np.max(peak_height) * min_peak_sep)
     p.add('Delta_E', peaks_pos[-1] - peaks_pos[-2])
     # p.add('g1_sigma', min_peak_sep / 5, min=0)
     p.add('sigma_p', min_peak_sep / np.sqrt(2) / np.pi, min=0)
     # n>=1 Centers
-    p.add('g1_center', peaks_pos[0], min=0)
+    p.add('g1_center', peaks_pos[0], min=0, vary=1)
     p.add('g2_center', peaks_pos[1], min=0)
     [p.add('g{}_center'.format(k+3),
            j,
@@ -119,6 +122,11 @@ def gauss_fit_poiss_ph_region(pnr, min_peak_sep, threshold=None, weighted=False,
                                )
     else:
         result = fit_model.fit(frequencies, x=x_val, params=p)
+
+    n_bar = result.params.valuesdict()['n_bar']
+    print 'poissonian probs from n=1,2...= {}'.\
+    format([np.exp(-n_bar) * n_bar**(k+1) / math.factorial(k+1)\
+    for k, j in enumerate(peak_height)])
 
     if plot:
         plt.figure(figsize=(10,5))
@@ -498,11 +506,11 @@ def min_overlap(x0, x1, sigma0, sigma1, samples=1000):
 
     return x_vec[np.argmin(snr)]
 
-def thresholds_N(pnr, min_peak_sep, threshold=None, weighted=False):
+def thresholds_N(pnr, min_peak_sep, th01=None, threshold=None, weighted=False):
     """
     thresholds between peaks assuming gaussian distributions
     """
-    result = gauss_fit_poiss_ph_region(pnr, min_peak_sep, threshold, weighted)
+    result = gauss_fit_poiss_ph_region(pnr, min_peak_sep, th01, threshold, weighted)
 
     centers = np.array([result.best_values['g{}_center'.format(k+1)]
                         for k, _

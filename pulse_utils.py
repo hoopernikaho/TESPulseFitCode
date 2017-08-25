@@ -3,6 +3,7 @@ import discriminator_edges as disc_edges
 import matplotlib.pyplot as plt
 import lecroy
 import numpy as np
+from scipy.optimize import curve_fit
 
 def time_vector(filename):
     trc = lecroy.LecroyBinaryWaveform(filename)
@@ -26,29 +27,26 @@ def disc_peak_full(signal, high_th, low_th, offset):
     # creates mask beginning from low crossing at leading edge to high crossing as the pulse decays
     starts_, stops_ = disc.intervals_no_edges(np.flipud(signal), high_th, low_th) 
 
-    stops = l_signal-starts_
-    starts = l_signal-stops_
-
-    # [plt.axvline(s, color='green') for s in starts]
-    # [plt.axvline(s) for s in stops]
+    stops = np.flipud(l_signal-starts_) # arrange according to ascending time
+    starts = np.flipud(l_signal-stops_)
 
     stops = stops + offset
     stops = stops[(stops <= l_signal)]
+    if offset!=0:
+        try:
+            """
+            checks if the extension of discriminator window of the last pulse overlaps 
+            an omitted partial pulse on the right edge of the trace.
+            if true, omit both pulses.
+            this avoids capturing a region containing 1.5 pulses.
+            """
+            last_stop = stops[-1]
+            hi_cross = disc.find_crossing(signal[last_stop-offset:last_stop], high_th)
+            if (len(hi_cross)>0):
+                stops = np.delete(stops,np.where(stops==last_stop),0)
+        except:
+            pass #no last stop exists
     
-    try:
-        """
-        checks if the extension of discriminator window of the last pulse overlaps 
-        an omitted partial pulse on the right edge of the trace.
-        if true, omit both pulses.
-        this avoids capturing a region containing 1.5 pulses.
-        """
-        last_stop = stops[-1]
-        hi_cross = disc.find_crossing(signal[last_stop-offset:last_stop], high_th)
-        if len(hi_cross)>0:
-            stops = np.delete(stops,0)
-    except:
-        pass #no last stop exists
-
     starts = starts[:len(stops)]
     mask = disc.create_mask_for_peak(len(signal), starts, stops)
     
@@ -82,3 +80,19 @@ def rise_time(time,signal,plot=True):
         plt.axvline(t10,linestyle='--')
         plt.axvline(t90,linestyle='--')
     return risetime
+
+def decay_time(time,signal,plot=True):
+    """returns 1/e decay time of tail"""
+    def func(x, a, b, c, d):
+        return a*np.exp(-c*(x-b))+d
+    a = np.max(signal)
+    d = np.min(signal)
+    c = 1/(1e-6) #reasonable guess for decay constant
+    b = time[np.argmax(signal)]
+    popt, pcov = curve_fit(func, time[np.argmax(signal):], signal[np.argmax(signal):], [a,b,c,d])
+    if plot:
+        plt.figure()
+        plt.plot(time[np.argmax(signal):],map(lambda t: func(t,*popt),time[np.argmax(signal):]))
+        plt.plot(time,signal)
+        plt.show()
+    return 1/popt[2]

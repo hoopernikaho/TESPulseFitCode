@@ -33,6 +33,9 @@ def results_extr(r):
     for i,key in enumerate(r.best_values.keys()):
         results_summary.append(r.best_values.values()[i])
         keys.append(key+'_fitted')
+    results_summary.append(float(r.redchi))
+    keys.append('redchi')
+    # print results_summary, keys
     return results_summary, keys
 
 def results_packager(results_summary, keys, fname):
@@ -40,8 +43,8 @@ def results_packager(results_summary, keys, fname):
     Concatinates fit results, filename or other flags if desired, in a pandas row.
     """
     # print results_summary, keys, fname
-    r = np.array(results_summary).reshape(1,8)
-    keys = np.array(keys).reshape(8,)
+    r = np.array(results_summary).reshape(1,9)
+    keys = np.array(keys).reshape(9,)
     p = pandas.DataFrame(r,columns=keys)
     q = pandas.DataFrame(np.array([fname]),
                          columns=['fname'])
@@ -98,7 +101,7 @@ def run_fit_two_poolable(outfile,cores,tasks,
     """
     p = Pool(cores)
     file_exists = os.path.isfile(outfile)
-    with open(outfile,'a+') as f:
+    with open(outfile,'w+') as f:
         if not file_exists:
             """create header"""
             df = p.map(
@@ -111,4 +114,4 @@ def run_fit_two_poolable(outfile,cores,tasks,
             try:
                 df.to_csv(f,header=False)
             except:
-                pass
+                break

@@ -12,7 +12,7 @@ import trace_param as tp
 
 
 def append2file(filename,text):
-    with open(filename,"a+") as f:
+    with open(filename,"w+") as f:
         f.write(text+'\n')
         f.close()
 
@@ -26,13 +26,14 @@ def max_height(filename):
 def param_extr(filename, high_th, low_th, offset):
 
     signal = tp.trace_extr(filename)
-
+    time = pu.time_vector(filename)
     """
     Max Height
     """
-    mask_height = ~pu.disc_edges_full(signal,high_th,low_th)+pu.disc_peak_full(signal,high_th,low_th,offset)
+    mask_height = ~pu.disc_edges_full(signal,high_th,low_th)+pu.disc_peak_full(signal,high_th,low_th,offset) # exclude edge traces which contain partial pulses that do not report max height of integer traces
     if np.sum(mask_height) == 0:
-        mask_height = np.ones(len(signal)).astype('bool')
+        mask_height = np.ones(len(signal)).astype('bool') # 
+    # plt.plot(time,mask_height*np.max(signal))
     height = np.max(signal[mask_height])
 
     """
@@ -45,9 +46,15 @@ def param_extr(filename, high_th, low_th, offset):
     Area within discriminator
     """
     area_win = np.sum(np.abs(signal[pu.disc_peak_full(signal,high_th,low_th,offset)]))
+    # plt.plot(time,pu.disc_peak_full(signal,high_th,low_th,offset)*np.max(signal))
+    """
+    Simple area above threshold
+    """
+    area = np.sum(signal[signal>high_th])
 
-    return np.array((area_win, height, rms),
+    return np.array((area_win, area, height, rms),
                 dtype=[('area_win', 'float64'),
+                        ('area', 'float64'),
                        ('height', 'float64'),
                        ('rms', 'float64')
                        ]

@@ -14,6 +14,9 @@ import pulse_utils as pu
 import pulse_averaging as pa
 import trace_param as tp
 
+def positive_time_axis(time_v):
+    return time_v-time_v[0]
+
 def time_offset(time_v, signal, high_th, low_th, offset):
     """ 
     shift a trace so that the steepest point is at time 0
@@ -50,7 +53,7 @@ def time_offset(time_v, signal, high_th, low_th, offset):
     return pa.shift(signal, - n_shift+int(len(signal)/2))
 
 def trace_ave(filelist, high_th, low_th, offset, smooth=201):
-    time = pu.time_vector(filelist[0])
+    time = positive_time_axis(pu.time_vector(filelist[0]))
     dt = np.diff(time)[0]
     a = [time_offset(time, tp.trace_extr(file), high_th, low_th, offset)
          for file
@@ -110,7 +113,7 @@ def fit_shift(time_s, signal, fit_model, high_th, low_th, offset):
 
 
 def fit_corrected_pulse(filelist, high_th, low_th, offset, fit_model):
-    time = pu.time_vector(filelist[0])
+    time = positive_time_axis(pu.time_vector(filelist[0]))
     dt = np.diff(time)[0]
     a = [fit_shift(time, tp.trace_extr(file), fit_model, high_th, low_th, offset)
          for file
