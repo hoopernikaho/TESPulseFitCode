@@ -13,10 +13,8 @@ def find_crossing(vec, th):
     :returns: list of index of crossings
     :rtype: list of int
     """
-
-    vec = vec - th
-    v_bool = (vec[:-1] * vec[1:]) <= 0
-    return list(compress(xrange(len(v_bool)), v_bool))
+    v_bool = vec > th
+    return np.bitwise_xor(v_bool[1:], v_bool[:-1]).nonzero()[0]
 
 
 def intervals_no_edges(signal, high_th, low_th):
@@ -113,7 +111,7 @@ def create_mask_for_peak(length, starts, stops):
     return mask
 
 
-def disc_peak(signal, high_th, low_th, edges=False):
+def disc_peak(signal, high_th, low_th, edges=False, bw=False):
     """from trace to mask
 
     high level function: from the trace and the SET-RESET threshold,
@@ -129,6 +127,7 @@ def disc_peak(signal, high_th, low_th, edges=False):
     :returns: boolean mask
     :rtype: numpy array of bool
     """
+    l_signal = len(signal)
     func = intervals_no_edges
     if edges:
         func = intervals_w_edges
