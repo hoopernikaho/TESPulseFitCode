@@ -45,17 +45,23 @@ def param_extr(filename, high_th, low_th, offset):
     """
     Area within discriminator
     """
-    area_win_abs = np.sum(np.abs(signal[pu.disc_peak_full(signal,high_th,low_th,offset)]))
-    area_win = np.sum(signal[pu.disc_peak_full(signal,high_th,low_th,offset)])
+    mask_area = pu.disc_peak_full(signal,high_th,low_th,offset)
+    area_win_abs = np.sum(np.abs(signal[mask_area]))
+    area_win = np.sum(signal[mask_area])
     # plt.plot(time,pu.disc_peak_full(signal,high_th,low_th,0)*np.max(signal))
     # plt.plot(time,pu.disc_peak_full(signal,high_th,low_th,offset)*np.max(signal))
     """
     Simple area above threshold
     """
     # area = np.sum(signal[signal>high_th])
-
-    return np.array((filename, area_win, area_win_abs, height, rms),
+    """
+    Number of edges detected
+    """
+    numedges = np.sum(mask_area[1:]>mask_area[:-1]) # if next element > current element, True and count
+    
+    return np.array((filename, numedges, area_win, area_win_abs, height, rms),
                 dtype=[('filename', 'U128'),
+                        ('numedges', 'U8'),
                         ('area_win', 'float64'),
                         ('area_win_abs', 'float64'),
                        ('height', 'float64'),
