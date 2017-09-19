@@ -8,6 +8,7 @@ import lecroy
 import numpy as np
 import peakutils
 import matplotlib.pyplot as plt
+from thres import solve, histogram
 
 from scipy.stats import norm
 
@@ -102,7 +103,7 @@ def gauss_fit_interp(pnr, min_peak_sep, threshold=None, weighted=False, plot=Fal
 
     # find a first approximation of the peak location using local differences
     peaks_pos, peak_height = peaks(pnr, min_peak_sep, threshold)
-
+    print peaks_pos
     # build a fitting model with a number of gaussian distributions matching
     # the number of peaks
     fit_model = np.sum([GaussianModel(prefix='g{}_'.format(k))
@@ -112,8 +113,8 @@ def gauss_fit_interp(pnr, min_peak_sep, threshold=None, weighted=False, plot=Fal
     # Generate the initial conditions for the fit
     p = Parameters()
 
-    p.add('A', np.max(peak_height) * min_peak_sep)
-    p.add('n_bar', 3.0)
+    p.add('A', np.max(peak_height) * min_peak_sep, min=0)
+    p.add('n_bar', 3.0, min=0)
     # p.add('Delta_E', peaks_pos[-1] - peaks_pos[-2])
     p.add('g0_sigma', min_peak_sep / 5, min=0)
     p.add('sigma_p', min_peak_sep / np.sqrt(2) / np.pi, min=0)
@@ -121,20 +122,17 @@ def gauss_fit_interp(pnr, min_peak_sep, threshold=None, weighted=False, plot=Fal
     # Centers
     p.add('g0_center', peaks_pos[0], min=0)
     p.add('g1_center', peaks_pos[1], min=0)
-    [p.add('g{}_center'.format(k + 2),
-           j,
-           # expr='g{}_center + Delta_E'.format(k + 1)
-           )
-     for k, j
-     in enumerate(peaks_pos[2:])]
 
     # amplitudes
-    [p.add('g{}_amplitude'.format(k),
-           j * min_peak_sep / np.sqrt(2),
-           expr='A * exp(-n_bar) * n_bar**{} / factorial({})'.format(k, k),
+    p.add('g0_amplitude'.format(k),
+           min_peak_sep / np.sqrt(2),
+           expr='A * exp(-n_bar)',
            min=0)
-     for k, j
-     in enumerate(peak_height)]
+
+    p.add('g1_amplitude'.format(k),
+           min_peak_sep / np.sqrt(2),
+           expr='A * exp(-n_bar) * n_bar',
+           min=0)
 
     # fixed width
     [p.add('g{}_sigma'.format(k + 1),
@@ -225,6 +223,37 @@ def thresholds_N(pnr, min_peak_sep, threshold=None, weighted=False):
     return [min_overlap(xs[j], xs[j + 1], ss[j], ss[j + 1])
             for j
             in range(N - 1)]
+
+def thresholds_N_unnormed(pnr, min_peak_sep, threshold=None, weighted=False):
+    """
+    thresholds between peaks assuming gaussian distributions
+    unlike thresholds_N, does not take each gaussian as being normalised on its own,
+    but also takes into account the distribution of counts in each gaussian distribution.
+    :param pnr: 2D histogram, output of np.histogram. 
+    """
+    x_val = pnr[1]
+    step = np.diff(x_val)[0]
+    x_val = x_val[:-1] + step / 2.
+
+    # note that all functions here return only properties of g1 and above.
+    # g0 is not computed since its distribution is not computed as gaussian using our discriminator
+
+    result = gauss_fit_interp(pnr, min_peak_sep, threshold, weighted)
+    
+    comps = result.eval_components(x=x_val)
+
+    centers = np.array([result.best_values['g{}_center'.format(k)]
+                        for k, _
+                        in enumerate(result.components)])
+
+    N = len(centers)
+
+    return [solve(x_val,
+        comps['g{}_'.format(j)],
+        comps['g{}_'.format(j+1)],
+        (x_val>centers[j])&(x_val<centers[j+1]))
+    for j
+    in range(N-1)]
 
 
 if __name__ == '__main__':

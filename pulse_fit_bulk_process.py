@@ -46,8 +46,13 @@ def results_packager(results_summary, keys, fname):
     r = np.array(results_summary).reshape(1,9)
     keys = np.array(keys).reshape(9,)
     p = pandas.DataFrame(r,columns=keys)
-    q = pandas.DataFrame(np.array([fname]),
-                         columns=['fname'])
+    # print np.array([fname],fmt='%s')
+    q = pandas.DataFrame([fname],
+                         columns=['fname'],
+                         # dtype='U216'
+                         )
+    # print fname
+    # print '{}\n'.format(np.array(q['fname']))
     return pandas.concat([q,p], axis=1)
 
 def results_saver(outfile, results_summary, keys, fname, mcmc_flag, unequal_edges):
@@ -68,7 +73,8 @@ def fit_two_poolable(file, two_pulse_fit, pulse_params, height_th, sigma0):
     try:
         time = pu.time_vector(file)
         signal = trcp.trace_extr(file,height_th)
-        fname = file.split('/')[-1].split('.trc')[0]
+        # fname = file.split('/')[-1].split('.trc')[0]
+        fname = file
         # print('success')
         result = pfp.fit_two_cw(time,signal,
                       two_pulse_fit,
@@ -93,6 +99,7 @@ def fit_two_poolable(file, two_pulse_fit, pulse_params, height_th, sigma0):
         return df
     except:
         print fname+' failed' #if file is corrupt
+        raise
 
 def run_fit_two_poolable(outfile,cores,tasks,
     two_pulse_fit, pulse_params, height_th, sigma0):

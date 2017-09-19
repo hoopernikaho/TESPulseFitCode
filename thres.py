@@ -4,6 +4,7 @@
 find the optimal threshold between peaks distributions without assuming distributions are Poisson distributed.
 borrows some functions from thres_poiss.
 """
+from __future__ import division
 import glob
 import lecroy
 import numpy as np
@@ -23,6 +24,36 @@ Lower height thresholds result in accidentals, hence the trailing n=0 tail.
 """
 def find_idx(array, value):
     return np.argmin(np.abs(array-value))
+
+def solve(x, a1, a2, lim):
+    """
+    solves for x where a1(x) = a2(x) within the stated limits
+    :param lim: boolean array for range of x values to consider - will be of the form (x>xlow)&(x<xhigh)
+    :param a1: array of values presumably a function of x
+    :param a2: another function with the same range as a1
+    """
+    N1 = int(np.sum(a1))
+    N2 = int(np.sum(a2))
+
+    a1 = a1[lim]
+    a2 = a2[lim]
+    x = x[lim]
+
+    bineq = np.argmin(np.abs(a2-a1))
+    xeq = x[bineq]
+    # noise = int(np.sum(a1[bineq:]))
+    # sgn_lost = int(np.sum(a2[:bineq]))
+    
+    # print 'at threshold {}'.format(xeq)
+    # print '# signal traces lost = {} of {}({:.1f}% of signal)'.format(sgn_lost, N2, sgn_lost/N2*100)
+    # print '# noise traces gained = {} of {}({:.1f}% of signal)'.format(noise, N1, noise/N2*100)
+    return xeq 
+
+def histogram(nphisto):
+    bins = nphisto[1][:-1]
+    bins = bins + np.diff(bins)[0]/2
+    frequencies =  nphisto[0]
+    return frequencies, bins
 
 def gauss_fit_poiss_ph_region(pnr, min_peak_sep, th01=None, threshold=None, weighted=False, plot=False):
     """
@@ -78,7 +109,8 @@ def gauss_fit_poiss_ph_region(pnr, min_peak_sep, th01=None, threshold=None, weig
     p.add('n_bar', 0.2, min=0)
 
     p.add('A', np.max(peak_height) * min_peak_sep)
-    p.add('Delta_E', peaks_pos[-1] - peaks_pos[-2])
+    # p.add('Delta_E', peaks_pos[-1] - peaks_pos[-2])
+    p.add('Delta_E', 5)
     # p.add('g1_sigma', min_peak_sep / 5, min=0)
     p.add('sigma_p', min_peak_sep / np.sqrt(2) / np.pi, min=0)
     # n>=1 Centers
@@ -526,3 +558,36 @@ def thresholds_N(pnr, min_peak_sep, th01=None, threshold=None, weighted=False):
     return [min_overlap(xs[j], xs[j + 1], ss[j], ss[j + 1])
             for j
             in range(N - 1)]
+
+def thresholds_N_unnormed(pnr, min_peak_sep, th01=None, threshold=None, weighted=False):
+    """
+    thresholds between peaks assuming gaussian distributions
+    unlike thresholds_N, does not take each gaussian as being normalised on its own,
+    but also takes into account the distribution of counts in each gaussian distribution.
+    :param pnr: 2D histogram, output of np.histogram. 
+    """
+    x_val = pnr[1][1:]
+    step = np.diff(x_val)[0]
+    x_val = x_val[:-1] + step / 2.
+
+    # note that all functions here return only properties of g1 and above.
+    # g0 is not computed since its distribution is not computed as gaussian using our discriminator
+
+    result = gauss_fit_poiss_ph_region(pnr, min_peak_sep, th01, threshold, weighted)
+    
+    comps = result.eval_components(x=x_val)
+
+    centers = np.array([result.best_values['g{}_center'.format(k+1)]
+                        for k, _
+                        in enumerate(result.components)])
+
+    N = len(centers)
+
+    return [solve(x_val,
+        comps['g{}_'.format(j+1)],
+        comps['g{}_'.format(j+2)],
+        (x_val>centers[j])&(x_val<centers[j+1]))
+    for j
+    in range(N-1)]
+
+

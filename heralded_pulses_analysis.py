@@ -45,16 +45,19 @@ def param_extr(filename, high_th, low_th, offset):
     """
     Area within discriminator
     """
-    area_win = np.sum(np.abs(signal[pu.disc_peak_full(signal,high_th,low_th,offset)]))
+    area_win_abs = np.sum(np.abs(signal[pu.disc_peak_full(signal,high_th,low_th,offset)]))
+    area_win = np.sum(signal[pu.disc_peak_full(signal,high_th,low_th,offset)])
+    # plt.plot(time,pu.disc_peak_full(signal,high_th,low_th,0)*np.max(signal))
     # plt.plot(time,pu.disc_peak_full(signal,high_th,low_th,offset)*np.max(signal))
     """
     Simple area above threshold
     """
-    area = np.sum(signal[signal>high_th])
+    # area = np.sum(signal[signal>high_th])
 
-    return np.array((area_win, area, height, rms),
-                dtype=[('area_win', 'float64'),
-                        ('area', 'float64'),
+    return np.array((filename, area_win, area_win_abs, height, rms),
+                dtype=[('filename', 'U128'),
+                        ('area_win', 'float64'),
+                        ('area_win_abs', 'float64'),
                        ('height', 'float64'),
                        ('rms', 'float64')
                        ]
