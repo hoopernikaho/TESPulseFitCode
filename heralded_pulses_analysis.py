@@ -60,8 +60,8 @@ def param_extr(filename, high_th, low_th, offset):
     numedges = np.sum(mask_area[1:]>mask_area[:-1]) # if next element > current element, True and count
     
     return np.array((filename, numedges, area_win, area_win_abs, height, rms),
-                dtype=[('filename', 'U128'),
-                        ('numedges', 'U8'),
+                dtype=[('filename', 'U256'),
+                        ('numedges', 'int8'),
                         ('area_win', 'float64'),
                         ('area_win_abs', 'float64'),
                        ('height', 'float64'),
