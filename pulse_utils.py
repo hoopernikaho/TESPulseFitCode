@@ -29,7 +29,9 @@ def disc_peak_full(signal, high_th, low_th, offset):
 
     stops = np.flipud(l_signal-starts_) # arrange according to ascending time
     starts = np.flipud(l_signal-stops_)
-
+    
+    starts = starts - 0 # implement left offset
+    starts = starts[starts >= 0]
     stops = stops + offset
     stops = stops[(stops <= l_signal)]
     if offset!=0:
@@ -47,7 +49,10 @@ def disc_peak_full(signal, high_th, low_th, offset):
         except:
             pass #no last stop exists
     
-    starts = starts[:len(stops)]
+    if len(stops)<len(starts):
+        starts = starts[:len(stops)]
+    if len(starts)<len(stops):
+        stops = stops[len(stops)-len(starts):]
     mask = disc.create_mask_for_peak(len(signal), starts, stops)
     
     return np.array(mask)
