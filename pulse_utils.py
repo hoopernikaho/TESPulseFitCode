@@ -101,3 +101,20 @@ def decay_time(time,signal,plot=True):
         plt.plot(time,signal)
         plt.show()
     return 1/popt[2]
+
+def disc_length(time,signal,high_th, low_th, offset):
+    mask = disc_peak_full(signal, high_th, low_th, offset).astype('int')
+    dmask = mask[1:]-mask[:-1]
+    # plt.figure()
+    # plt.plot(time,signal/np.max(signal))
+    # plt.plot(time[:],mask)
+    # plt.plot(time[:-1],dmask)
+    # plt.show()
+    try:
+        start = time[:-1][dmask==1][0]
+        stop = time[:-1][dmask==-1][0]
+        if start > stop:
+            pass
+        return stop-start
+    except:
+        return 0
