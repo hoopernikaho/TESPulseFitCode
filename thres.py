@@ -10,7 +10,7 @@ import lecroy
 import numpy as np
 import peakutils
 import matplotlib.pyplot as plt
-import thres_poiss as tp
+# from thres_poiss import peaks
 from scipy.stats import norm
 import math
 
@@ -55,6 +55,36 @@ def histogram(nphisto):
     frequencies =  nphisto[0]
     return frequencies, bins
 
+def peaks(pnr, min_peak_sep=1, threshold=None):
+    """
+    Only the peaks with amplitude higher than the threshold will be detected.
+    The peak with the highest amplitude is preferred to satisfy minimum
+    distance constraint (in units of indices).
+
+    :param pnr: 2D histogram, output of np.histogram()
+    :param min_peak_sep: Minimum distance between each detected peak.
+    :param threshold: Normalized threshold, float between [0., 1.]
+    """
+    # unpack the histogram into x and y values
+    frequencies = pnr[0]
+
+    # match the number of bins to the frequencies, find the step size
+    x_val = pnr[1]
+    step = np.diff(x_val)[0]
+    x_val = x_val[:-1] + step / 2.
+
+    # heuristic value for the threshold. Input one if you can do better!
+    if threshold is None:
+        threshold = np.median(frequencies) / np.max(frequencies) + .05
+
+    # the dirty work
+    indexes = peakutils.indexes(frequencies,
+                                thres=threshold,
+                                min_dist=int(min_peak_sep / step))
+   
+    indexes.sort()
+    return x_val[indexes], frequencies[indexes]
+
 def gauss_fit_poiss_ph_region(pnr, min_peak_sep, th01=None, threshold=None, weighted=False, plot=False):
     """
     improve the precision in the location of the peaks by fitting them
@@ -79,7 +109,7 @@ def gauss_fit_poiss_ph_region(pnr, min_peak_sep, th01=None, threshold=None, weig
     x_val = x_val[:-1] + step / 2.
 
     # find a first approximation of the peak location using local differences
-    peaks_pos, peak_height = tp.peaks([frequencies,x_val], min_peak_sep, threshold)
+    peaks_pos, peak_height = peaks([frequencies,x_val], min_peak_sep, threshold)
     print 'est peak pos = {}\nest peak hts = {}'.format(peaks_pos, peak_height)
 
     # detect min between n=0 and n=1
@@ -199,7 +229,7 @@ def gauss_fit_poiss_ph(pnr, min_peak_sep, threshold=None, weighted=False, plot=F
     x_val = x_val[:-1] + step / 2.
 
     # find a first approximation of the peak location using local differences
-    peaks_pos, peak_height = tp.peaks([frequencies,x_val], min_peak_sep, threshold)
+    peaks_pos, peak_height = peaks([frequencies,x_val], min_peak_sep, threshold)
     print peaks_pos, peak_height
 
     # build a fitting model with a number of gaussian distributions matching
@@ -290,7 +320,7 @@ def gauss_fit_interp_disc(pnr, min_peak_sep, threshold=None, weighted=False):
     x_val = x_val[:-1] + step / 2.
 
     # find a first approximation of the peak location using local differences
-    peaks_pos, peak_height = tp.peaks([frequencies,x_val], min_peak_sep, threshold)
+    peaks_pos, peak_height = peaks([frequencies,x_val], min_peak_sep, threshold)
     print peaks_pos, peak_height
 
     # build a fitting model with a number of gaussian distributions matching
@@ -393,7 +423,7 @@ Some older code that
 -does not take into account the amplitude contraints to follow Poission
 """
 
-def gauss_fit(pnr, min_peak_sep, threshold=None, weighted=False):
+def gauss_fit(pnr, min_peak_sep, threshold=None, weighted=False,plot=False):
     """
     improve the precision in the location of the peaks by fitting them
     using a sum of Gaussian distributions
@@ -414,11 +444,11 @@ def gauss_fit(pnr, min_peak_sep, threshold=None, weighted=False):
     x_val = x_val[:-1] + step / 2.
 
     # find a first approximation of the peak location using local differences
-    peaks_pos, peak_height = tp.peaks(pnr, min_peak_sep, threshold)
+    peaks_pos, peak_height = peaks(pnr, min_peak_sep, threshold)
 
     # build a fitting model with a number of gaussian distributions matching
     # the number of peaks
-    fit_model = np.sum([GaussianModel(prefix='g{}_'.format(k))
+    fit_model = np.sum([GaussianModel(prefix='g{}_'.format(k+1))
                         for k, _
                         in enumerate(peaks_pos)])
 
@@ -426,13 +456,13 @@ def gauss_fit(pnr, min_peak_sep, threshold=None, weighted=False):
     p = Parameters()
 
     p.add('A', np.max(peak_height) * min_peak_sep)
-    p.add('g0_sigma', min_peak_sep / 5, min=0)
+    p.add('g1_sigma', min_peak_sep / 5, min=0)
     p.add('sigma_p', min_peak_sep / np.sqrt(2) / np.pi, min=0)
 
     # Centers
-    p.add('g0_center', peaks_pos[0], min=0)
-    p.add('g1_center', peaks_pos[1], min=0)
-    [p.add('g{}_center'.format(k + 2),
+    p.add('g1_center', peaks_pos[0], min=0)
+    p.add('g2_center', peaks_pos[1], min=0)
+    [p.add('g{}_center'.format(k + 3),
            j,
            # expr='g{}_center + Delta_E'.format(k + 1)
            )
@@ -440,7 +470,7 @@ def gauss_fit(pnr, min_peak_sep, threshold=None, weighted=False):
      in enumerate(peaks_pos[2:])]
 
     # amplitudes
-    [p.add('g{}_amplitude'.format(k),
+    [p.add('g{}_amplitude'.format(k+1),
            j * min_peak_sep / np.sqrt(2),
            # expr='A * exp(-n_bar) * n_bar**{} / factorial({})'.format(k, k),
            min=0)
@@ -448,11 +478,11 @@ def gauss_fit(pnr, min_peak_sep, threshold=None, weighted=False):
      in enumerate(peak_height)]
 
     # fixed width
-    [p.add('g{}_sigma'.format(k + 1),
+    [p.add('g{}_sigma'.format(k + 2),
            min_peak_sep / np.sqrt(2) / np.pi,
            min=0,
            # expr='sigma_p * sqrt({})'.format(k + 1)
-           expr='sigma_p'
+           # expr='sigma_p'
            )
      for k, _
      in enumerate(peak_height[1:])]
@@ -466,21 +496,19 @@ def gauss_fit(pnr, min_peak_sep, threshold=None, weighted=False):
                                x=x_val,
                                params=p,
                                weights=1 / err,
-                               # method='nelder'
+                               method='powell'
                                )
     else:
         result = fit_model.fit(frequencies, x=x_val, params=p)
 
-    # amplitudes = np.array([result.best_values['g{}_amplitude'.format(k)]
-    #                        for k, _
-    #                        in enumerate(peaks_pos)])
-    # centers = np.array([result.best_values['g{}_center'.format(k)]
-    #                     for k, _
-    #                     in enumerate(peaks_pos)])
-    # sigmas = np.array([result.best_values['g{}_sigma'.format(k)]
-    #                    for k, _
-    #                    in enumerate(peaks_pos)])
-    # s_vec = centers.argsort()
+    if plot:
+        plt.figure(figsize=(10,5))
+        plt.errorbar(pnr[1][:-1]+step/2,pnr[0],yerr=np.sqrt(pnr[0]),linestyle='',ecolor='black',color='black')
+        plt.plot(x_val,result.eval(x=x_val))
+        [plt.scatter(x_val, result.eval_components(x=x_val)['g{}_'.format(k+1)],marker='.') for k,_ in enumerate(result.components)]
+        # plt.axvline(th01,color='black', label='th01')
+        plt.legend()
+        print result.fit_report()
     return result
 
 def gauss_fit_results(pnr, min_peak_sep, threshold=None, weighted=False, plot=False):
@@ -574,6 +602,37 @@ def thresholds_N_unnormed(pnr, min_peak_sep, th01=None, threshold=None, weighted
     # g0 is not computed since its distribution is not computed as gaussian using our discriminator
 
     result = gauss_fit_poiss_ph_region(pnr, min_peak_sep, th01, threshold, weighted)
+    
+    comps = result.eval_components(x=x_val)
+
+    centers = np.array([result.best_values['g{}_center'.format(k+1)]
+                        for k, _
+                        in enumerate(result.components)])
+
+    N = len(centers)
+
+    return [solve(x_val,
+        comps['g{}_'.format(j+1)],
+        comps['g{}_'.format(j+2)],
+        (x_val>centers[j])&(x_val<centers[j+1]))
+    for j
+    in range(N-1)]
+
+def thresholds_unnormed(pnr, min_peak_sep, threshold=None, weighted=False):
+    """
+    thresholds between peaks assuming gaussian distributions
+    unlike thresholds_N, does not take each gaussian as being normalised on its own,
+    also does NOT take into account the distribution of counts in each gaussian distribution.
+    :param pnr: 2D histogram, output of np.histogram. 
+    """
+    x_val = pnr[1][1:]
+    step = np.diff(x_val)[0]
+    x_val = x_val[:-1] + step / 2.
+
+    # note that all functions here return only properties of g1 and above.
+    # g0 is not computed since its distribution is not computed as gaussian using our discriminator
+
+    result = gauss_fit(pnr, min_peak_sep, threshold, weighted)
     
     comps = result.eval_components(x=x_val)
 

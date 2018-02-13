@@ -40,7 +40,10 @@ def param_extr(filename, high_th, low_th, offset):
     RMS
     """
     rms = np.sqrt(np.mean(np.square(signal[mask_height])))
-
+    """
+    Background 
+    """
+    bg = tp.find_bg(signal)*1e3
     # height = np.max(signal)
     """
     Area within discriminator
@@ -59,13 +62,14 @@ def param_extr(filename, high_th, low_th, offset):
     """
     numedges = np.sum(mask_area[1:]>mask_area[:-1]) # if next element > current element, True and count
     
-    return np.array((filename, numedges, area_win, area_win_abs, height, rms),
+    return np.array((filename, numedges, area_win, area_win_abs, height, rms, bg),
                 dtype=[('filename', 'U256'),
                         ('numedges', 'int8'),
                         ('area_win', 'float64'),
                         ('area_win_abs', 'float64'),
                        ('height', 'float64'),
-                       ('rms', 'float64')
+                       ('rms', 'float64'),
+                       ('bg_mv', 'float64')
                        ]
                 )
 

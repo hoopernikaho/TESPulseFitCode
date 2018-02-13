@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from lmfit import Model, Parameters
 import math
 from itertools import compress
-
+import trace_param as trcp
 import pulse_utils as pu
 
 from itertools import compress
@@ -34,15 +34,17 @@ def fit_two_cw(time, signal,
             pulse_params,
             height_th,
             sigma0):
-    
+    # signal = signal - np.median(signal[signal<height_th])
     (sum_a,sum_mu,sum_b,sum_tau,diff_a,diff_b,diff_tau) = pulse_params
-    # mask = pu.disc_peak_full(signal,height_th,0,0)
     mask = pu.disc_peak_full(signal,height_th,0,0)
+    # signal = signal - trcp.find_bg(signal[~mask])
+    # mask = pu.disc_peak_full(signal,height_th,0,0)
     # plt.plot(time,mask*np.max(signal),linestyle='--')
     left_edges = find_crossing(mask, 0.5, 'left')
     right_edges = find_crossing(mask, 0.5, 'right')
 
     one_x_offset_init_min = time[left_edges[0]]
+    # one_x_offset_init_max = time[right_edges[0]]
     one_x_offset_init_max = time[left_edges[0]+np.argmax(signal[left_edges[0]:right_edges[0]])]
 
     if len(left_edges) == 1:

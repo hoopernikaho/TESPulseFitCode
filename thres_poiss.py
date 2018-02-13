@@ -114,7 +114,7 @@ def gauss_fit_interp(pnr, min_peak_sep, threshold=None, weighted=False, plot=Fal
     p = Parameters()
 
     p.add('A', np.max(peak_height) * min_peak_sep, min=0)
-    p.add('n_bar', 3.0, min=0)
+    p.add('n_bar', 0.4 , min=0)
     # p.add('Delta_E', peaks_pos[-1] - peaks_pos[-2])
     p.add('g0_sigma', min_peak_sep / 5, min=0)
     p.add('sigma_p', min_peak_sep / np.sqrt(2) / np.pi, min=0)
@@ -131,7 +131,7 @@ def gauss_fit_interp(pnr, min_peak_sep, threshold=None, weighted=False, plot=Fal
 
     p.add('g1_amplitude'.format(k),
            min_peak_sep / np.sqrt(2),
-           expr='A * exp(-n_bar) * n_bar',
+           expr='A * (1-exp(-n_bar))',
            min=0)
 
     # fixed width
@@ -148,12 +148,13 @@ def gauss_fit_interp(pnr, min_peak_sep, threshold=None, weighted=False, plot=Fal
         # generates the poissonian errors, correcting for zero values
         err = np.sqrt(frequencies)
         err[frequencies == 0] = 1
+        # err[frequencies < 200] = 1e5
 
         result = fit_model.fit(frequencies,
                                x=x_val,
                                params=p,
                                weights=1 / err,
-                               # method='nelder'
+                               # method='powell'
                                )
     else:
         result = fit_model.fit(frequencies, x=x_val, params=p)

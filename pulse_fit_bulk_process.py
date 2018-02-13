@@ -98,8 +98,9 @@ def fit_two_poolable(file, two_pulse_fit, pulse_params, height_th, sigma0):
         # Extracts useful data for saving
         return df
     except:
-        print fname+' failed' #if file is corrupt
-        raise
+        # print fname+' failed' #if file is corrupt
+        # raise
+        pass
 
 def run_fit_two_poolable(outfile,cores,tasks,
     two_pulse_fit, pulse_params, height_th, sigma0):
@@ -121,4 +122,6 @@ def run_fit_two_poolable(outfile,cores,tasks,
             try:
                 df.to_csv(f,header=False)
             except:
-                break
+                pass
+                # raise
+                # break

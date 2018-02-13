@@ -7,6 +7,7 @@ https://github.com/yetifrisstlama/readTrc
 """
 from readTrc import *
 import numpy as np
+from scipy.signal import savgol_filter
 # import pyximport
 # pyximport.install()
 
@@ -32,8 +33,8 @@ def trace_extr(filename, bg_correction=True):
     _, signal, _ = readTrc(filename)
     # plt.figure(); plt.hist(signal,21,label='before',range=(-0.01,0.01)); plt.xlim(-0.01,0.01); plt.legend(); plt.show()
     if bg_correction:
-        if cyt:
-            return signal - find_bg_c(signal)
+        # if cyt:
+            # return signal - find_bg_c(signal)
         # plt.figure(); plt.hist(signal - find_bg(signal,21),21,label='after',range=(-0.01,0.01)); plt.xlim(-0.01,0.01); plt.legend(); plt.show()
         return signal - find_bg(signal)
     return signal
@@ -45,7 +46,7 @@ def full_extr(filename):
     return time, signal, d
 
 
-def find_bg(signal, bins=21):
+def find_bg(signal, bins=51):
     """find vertical offsets
 
     :param signal: trace
@@ -56,10 +57,12 @@ def find_bg(signal, bins=21):
     :rtype: float
     """
     freq, ampl = np.histogram(signal, bins, range=(-0.01,0.01))
-    return ampl[np.argmax(freq)]
+    freq_f = savgol_filter(freq,9,1)
+
+    return (ampl[:-1]+(ampl[1]-ampl[0])/2)[np.argmax(freq_f)]
 
 
-def find_bg_c(signal, bins=21):
+def find_bg_c(signal, bins=61):
     """find vertical offsets
 
     :param signal: trace
@@ -69,7 +72,9 @@ def find_bg_c(signal, bins=21):
     :returns: peak of the histogram
     :rtype: float
     """
+    # print 'find_bg_c'
     h = htest.hist1d(bins, np.min(signal), np.max(signal))
+    # h = htest.hist1d(bins, -0.01, 0.01)
     h.fillcy(signal, np.ones(len(signal)))
     # h.fillcywithcall(signal, np.ones(bins))
     return h.xaxis.values()[np.argmax(h.data)]

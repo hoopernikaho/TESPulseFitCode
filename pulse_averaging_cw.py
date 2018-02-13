@@ -133,3 +133,45 @@ def fit_corrected_pulse(filelist, high_th, low_th, offset, fit_model):
     a_avg = a_avg - hist_fs[1][np.argmax(hist_fs[0])]
 
     return time, a_avg, a_std 
+
+def time_fitted(time_s, signal, fit_model, high_th, low_th, offset):
+    """ 
+    fit the trace with a sample pulse and return the detection time
+    """
+    try:
+        dt = np.diff(time_s)[0]
+        d_signal = savgol_filter(np.diff(signal), 301, 3)
+        # ax = plt.gca()
+        # ax2 = ax.twinx()
+        # ax2.plot(d_signal/np.max(d_signal), color='green')
+
+        # use peaks only if they are legitimate edges identified by the set-reset switch 
+        mask = pu.disc_peak_full(signal, high_th, low_th, offset)
+
+        # find peaks in the derivative to find the steepest point
+        idx = np.array([i for i in peakutils.indexes(d_signal, .5, 3000) if mask[i]==True])
+        # print(time_s[idx])
+        # print time_v[left_edges], time_v[idx]
+
+        if len(idx) == 0:
+            return [np.nan for _ in time_s]
+
+        idx_s = np.flipud(idx[d_signal[idx].argsort()])
+        # print(time_s[idx_s[0]])
+
+        p = Parameters()
+        p.add('x_offset', time_s[np.argmax(signal)])
+        if len(idx_s) > 0:
+            p.add('x_offset', time_s[idx_s[0]])
+        p.add('amplitude', 1, vary=1)
+
+        result = fit_model.fit(signal,
+                               x=time_s,
+                               params=p,
+                               # weights=1 / 0.001
+                               )
+
+        toa = result.best_values['x_offset']
+        return toa
+    except:
+        return 0
