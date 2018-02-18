@@ -26,7 +26,7 @@ def time_offset(time_v, signal, high_th, low_th, offset):
     dt = np.diff(time_v)[0]
 
     # derivative of the signal, smoothed
-    d_signal = savgol_filter(np.diff(signal), 301, 3)
+    d_signal = savgol_filter(np.diff(signal), 41, 1)
     # ax = plt.gca()
     # ax2 = ax.twinx()
     # ax2.plot(d_signal/np.max(d_signal), color='green')
@@ -52,7 +52,7 @@ def time_offset(time_v, signal, high_th, low_th, offset):
     n_shift = int(time_p / dt)
     return pa.shift(signal, - n_shift+int(len(signal)/2))
 
-def trace_ave(filelist, high_th, low_th, offset, smooth=201):
+def trace_ave(filelist, high_th, low_th, offset, smooth=41):
     time = positive_time_axis(pu.time_vector(filelist[0]))
     dt = np.diff(time)[0]
     a = [time_offset(time, tp.trace_extr(file), high_th, low_th, offset)
@@ -66,14 +66,14 @@ def trace_ave(filelist, high_th, low_th, offset, smooth=201):
     time = time[idx_0:idx_0 + v_len]
     a = [line[idx_0:idx_0 + v_len] for line in a]
 
-    return time, savgol_filter(np.nanmean(a, 0), smooth, 3)
+    return time, savgol_filter(np.nanmean(a, 0), smooth, 1)
 
 def fit_shift(time_s, signal, fit_model, high_th, low_th, offset):
     """ 
     fit the trace with a sample pulse and shift it to match the staritngtime
     """
     dt = np.diff(time_s)[0]
-    d_signal = savgol_filter(np.diff(signal), 301, 3)
+    d_signal = savgol_filter(np.diff(signal), 41, 1)
     # ax = plt.gca()
     # ax2 = ax.twinx()
     # ax2.plot(d_signal/np.max(d_signal), color='green')
@@ -140,7 +140,7 @@ def time_fitted(time_s, signal, fit_model, high_th, low_th, offset):
     """
     try:
         dt = np.diff(time_s)[0]
-        d_signal = savgol_filter(np.diff(signal), 301, 3)
+        d_signal = savgol_filter(np.diff(signal), 41, 1)
         # ax = plt.gca()
         # ax2 = ax.twinx()
         # ax2.plot(d_signal/np.max(d_signal), color='green')
@@ -153,8 +153,8 @@ def time_fitted(time_s, signal, fit_model, high_th, low_th, offset):
         # print(time_s[idx])
         # print time_v[left_edges], time_v[idx]
 
-        if len(idx) == 0:
-            return [np.nan for _ in time_s]
+        # if len(idx) == 0:
+        #     return [np.nan for _ in time_s]
 
         idx_s = np.flipud(idx[d_signal[idx].argsort()])
         # print(time_s[idx_s[0]])
@@ -172,6 +172,7 @@ def time_fitted(time_s, signal, fit_model, high_th, low_th, offset):
                                )
 
         toa = result.best_values['x_offset']
+        # print(toa)
         return toa
     except:
         return 0

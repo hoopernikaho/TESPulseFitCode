@@ -52,7 +52,8 @@ def fit_two_cw(time, signal,
         two_x_offset_init_max = time[right_edges[0]]
 
         one_x_offset_init = one_x_offset_init_min
-        two_x_offset_init = two_x_offset_init_max - 0.5e-6
+        # two_x_offset_init = two_x_offset_init_max - 0.5e-6
+        two_x_offset_init = two_x_offset_init_min 
     else:
         two_x_offset_init_min = time[left_edges[1]]
         two_x_offset_init_max = time[left_edges[1]+np.argmax(signal[left_edges[1]:right_edges[1]])]
@@ -103,6 +104,6 @@ def fit_two_cw(time, signal,
                                x=np.array(time),
                                params=p,
                                weights=1/sigma0,
-                               method='powell'
+                               method='powell',
                                )
     return result
